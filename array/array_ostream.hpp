@@ -1,5 +1,5 @@
-#ifndef ARRAY_OSTREAM
-#define ARRAY_OSTREAM
+#ifndef ARRAY_OSTREAM_HPP
+#define ARRAY_OSTREAM_HPP
 
 #include <ostream>
 #include <array>

@@ -1,8 +1,8 @@
-#ifndef LIST_OSTREAM
-#define LIST_OSTREAM
+#ifndef MULTISET_OSTREAM_HPP
+#define MULTISET_OSTREAM_HPP
 
 #include <ostream>
-#include <list>
+#include <set>
 
 #ifndef PREFIX
 #define PREFIX "["
@@ -18,10 +18,10 @@
 
 namespace std {
     template<typename T>
-    ostream& operator<<(ostream& os, const list<T>& l) {
+    ostream& operator<<(ostream& os, const multiset<T>& ms) {
         os << PREFIX;
-        for (typename list<T>::iterator it = l.begin(); it != l.end(); ++it) {
-            if (it != l.begin()) os << DELIMITER;
+        for (typename multiset<T>::iterator it = ms.begin(); it != ms.end(); ++it) {
+            if (it != ms.begin()) os << DELIMITER;
             os << *it;
         }
         os << POSTFIX;

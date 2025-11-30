@@ -1,8 +1,8 @@
-#ifndef VECTOR_OSTREAM
-#define VECTOR_OSTREAM
+#ifndef FORWARD_LIST_OSTREAM_HPP
+#define FORWARD_LIST_OSTREAM_HPP
 
 #include <ostream>
-#include <vector>
+#include <forward_list>
 
 #ifndef PREFIX
 #define PREFIX "["
@@ -18,10 +18,10 @@
 
 namespace std {
     template<typename T>
-    ostream& operator<<(ostream& os, const vector<T>& v) {
+    ostream& operator<<(ostream& os, const forward_list<T>& fl) {
         os << PREFIX;
-        for (typename vector<T>::iterator it = v.begin(); it != v.end(); ++it) {
-            if (it != v.begin()) os << DELIMITER;
+        for (typename forward_list<T>::iterator it = fl.begin(); it != fl.end(); ++it) {
+            if (it != fl.begin()) os << DELIMITER;
             os << *it;
         }
         os << POSTFIX;

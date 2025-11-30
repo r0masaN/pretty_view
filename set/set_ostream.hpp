@@ -1,5 +1,5 @@
-#ifndef MULTISET_OSTREAM
-#define MULTISET_OSTREAM
+#ifndef SET_OSTREAM_HPP
+#define SET_OSTREAM_HPP
 
 #include <ostream>
 #include <set>
@@ -18,10 +18,10 @@
 
 namespace std {
     template<typename T>
-    ostream& operator<<(ostream& os, const multiset<T>& ms) {
+    ostream& operator<<(ostream& os, const set<T>& s) {
         os << PREFIX;
-        for (typename multiset<T>::iterator it = ms.begin(); it != ms.end(); ++it) {
-            if (it != ms.begin()) os << DELIMITER;
+        for (typename set<T>::iterator it = s.begin(); it != s.end(); ++it) {
+            if (it != s.begin()) os << DELIMITER;
             os << *it;
         }
         os << POSTFIX;

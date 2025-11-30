@@ -1,8 +1,8 @@
-#ifndef UNORDERED_MAP_OSTREAM
-#define UNORDERED_MAP_OSTREAM
+#ifndef MULTIMAP_OSTREAM_HPP
+#define MULTIMAP_OSTREAM_HPP
 
 #include <ostream>
-#include <unordered_map>
+#include <map>
 
 #ifndef PREFIX
 #define PREFIX "["
@@ -18,10 +18,10 @@
 
 namespace std {
     template<typename K, typename V>
-    ostream& operator<<(ostream& os, const unordered_map<K, V>& um) {
+    ostream& operator<<(ostream& os, const multimap<K, V>& mm) {
         os << PREFIX;
-        for (typename unordered_map<K, V>::iterator it = um.begin(); it != um.end(); ++it) {
-            if (it != um.begin()) os << DELIMITER;
+        for (typename map<K, V>::iterator it = mm.begin(); it != mm.end(); ++it) {
+            if (it != mm.begin()) os << DELIMITER;
             os << "{" << it->first << ": " << it->second << "}";
         }
         os << POSTFIX;

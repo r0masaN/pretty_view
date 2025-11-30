@@ -1,5 +1,5 @@
-#ifndef INITIALIZER_LIST_OSTREAM
-#define INITIALIZER_LIST_OSTREAM
+#ifndef INITIALIZER_LIST_OSTREAM_HPP
+#define INITIALIZER_LIST_OSTREAM_HPP
 
 #include <ostream>
 #include <initializer_list>

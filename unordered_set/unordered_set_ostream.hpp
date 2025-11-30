@@ -1,8 +1,8 @@
-#ifndef SET_OSTREAM
-#define SET_OSTREAM
+#ifndef UNORDERED_SET_OSTREAM_HPP
+#define UNORDERED_SET_OSTREAM_HPP
 
 #include <ostream>
-#include <set>
+#include <unordered_set>
 
 #ifndef PREFIX
 #define PREFIX "["
@@ -18,10 +18,10 @@
 
 namespace std {
     template<typename T>
-    ostream& operator<<(ostream& os, const set<T>& s) {
+    ostream& operator<<(ostream& os, const unordered_set<T>& us) {
         os << PREFIX;
-        for (typename set<T>::iterator it = s.begin(); it != s.end(); ++it) {
-            if (it != s.begin()) os << DELIMITER;
+        for (typename unordered_set<T>::iterator it = us.begin(); it != us.end(); ++it) {
+            if (it != us.begin()) os << DELIMITER;
             os << *it;
         }
         os << POSTFIX;

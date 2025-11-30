@@ -1,5 +1,5 @@
-#ifndef PAIR_OSTREAM
-#define PAIR_OSTREAM
+#ifndef PAIR_OSTREAM_HPP
+#define PAIR_OSTREAM_HPP
 
 #include <ostream>
 #include <bits/stl_pair.h>

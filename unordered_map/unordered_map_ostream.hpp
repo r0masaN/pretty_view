@@ -1,5 +1,5 @@
-#ifndef UNORDERED_MULTIMAP_OSTREAM
-#define UNORDERED_MULTIMAP_OSTREAM
+#ifndef UNORDERED_MAP_OSTREAM_HPP
+#define UNORDERED_MAP_OSTREAM_HPP
 
 #include <ostream>
 #include <unordered_map>
@@ -18,10 +18,10 @@
 
 namespace std {
     template<typename K, typename V>
-    ostream& operator<<(ostream& os, const unordered_multimap<K, V>& umm) {
+    ostream& operator<<(ostream& os, const unordered_map<K, V>& um) {
         os << PREFIX;
-        for (typename unordered_multimap<K, V>::iterator it = umm.begin(); it != umm.end(); ++it) {
-            if (it != umm.begin()) os << DELIMITER;
+        for (typename unordered_map<K, V>::iterator it = um.begin(); it != um.end(); ++it) {
+            if (it != um.begin()) os << DELIMITER;
             os << "{" << it->first << ": " << it->second << "}";
         }
         os << POSTFIX;

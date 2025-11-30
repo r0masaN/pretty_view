@@ -1,5 +1,5 @@
-#ifndef UNORDERED_MULTISET_OSTREAM
-#define UNORDERED_MULTISET_OSTREAM
+#ifndef UNORDERED_MULTISET_OSTREAM_HPP
+#define UNORDERED_MULTISET_OSTREAM_HPP
 
 #include <ostream>
 #include <unordered_set>

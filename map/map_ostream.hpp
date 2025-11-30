@@ -1,5 +1,5 @@
-#ifndef MAP_OSTREAM
-#define MAP_OSTREAM
+#ifndef MAP_OSTREAM_HPP
+#define MAP_OSTREAM_HPP
 
 #include <ostream>
 #include <map>
