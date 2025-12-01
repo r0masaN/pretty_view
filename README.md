@@ -8,12 +8,21 @@ Simple C++ library that complements 'std' by adding custom overloading for '&lt;
 3. easily print selected collection with any 'ostream' with '<<' like default types
 
 ## UPD:
-Everything in all folders **except** "pretty_view" is bullshit for toddlers from kindergarten)
+Everything in all folders **except** `pretty_view` is bullshit for toddlers from kindergarten)
 The **real** unified tool for cozy writing in ostream is pretty_view.hpp thing) it's freaking wild.
 And I've spent literally 6+ hours in a row for this 🤪
 
-## Usage of the "pretty_view"
-```cpp
+## Usage of the `pretty_view`
+```c++
 ostream << ... << rmsn::pretty_view(N) << ...;
 ```
 where N is any collection or tuple-like thing (thanks to ADL nothing bad happens with this overloading)
+Structure of struct `pretty_view`:
+```c++
+struct pretty_view {
+    const T& t;
+    const char *col_pref, *col_delim, *col_post, *tup_pref, *tup_delim, *tup_post;
+};
+```
+where **col = collection**, **tup = tuple**, **pref = prefix**, **post = postfix** and **delim = delimiter**
+Ofc you can set them yourself
