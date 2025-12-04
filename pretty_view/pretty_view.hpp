@@ -40,9 +40,9 @@ namespace rmsn {
     template<typename T>
     requires (is_collection<T> || is_tuple<T>)
     struct pretty_view {
-        explicit pretty_view(const T& t) : _t(t) {}
+        explicit pretty_view(const T& t) noexcept : _t(t) {}
 
-        friend std::ostream& operator<<(std::ostream& os, const pretty_view<T>& pv) {
+        friend std::ostream& operator<<(std::ostream& os, const pretty_view<T>& pv) noexcept {
             if constexpr (is_collection<T>) { // if proxy contains collection
                 os << pretty_view_helper::collection_prefix;
 
