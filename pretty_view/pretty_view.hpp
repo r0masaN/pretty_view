@@ -19,18 +19,18 @@ namespace rmsn {
     template<typename T>
     using base_t = std::remove_cvref_t<T>;
 
-    // is the type is a string-like (need to ensure that we won'_t write a string-like type char by char like it's array of chars)
+    // is the type is a string-like (need to ensure that we won't write a string-like type char by char like it's array of chars)
     template<typename T>
     concept is_str_like = std::is_convertible_v<base_t<T>, std::string> || std::is_convertible_v<base_t<T>, std::string_view>;
 
     // is the type is a collection-like (has iterators)
     template<typename T>
     concept is_collection = requires (const base_t<T>& t) {
-        std::begin(t); // unified way to get an iterator (instead of simple _t.begin() that, for example, couldn'_t be
+        std::begin(t); // unified way to get an iterator (instead of simple t.begin() that, for example, couldn't be
         std::end(t); // invoked on raw arrays
     } && !is_str_like<T>; // cuz std::string, std::string_view, char arrays, const char * also can get iterators
 
-    // is the type is a tuple-like (can invoke std::get<N>(_t), std::tuple_size<T>)
+    // is the type is a tuple-like (can invoke std::get<N>(), std::tuple_size<T>)
     template<typename T>
     concept is_tuple = requires {
         std::tuple_size<base_t<T>>::value;
@@ -47,13 +47,13 @@ namespace rmsn {
                 os << pretty_view_helper::collection_prefix;
 
                 const auto begin = std::begin(pv._t), end = std::end(pv._t);
-                using elem_t = base_t<decltype(*begin)>; // dirty type (I don'_t care cuz it will be cleaned in concepts)
+                using elem_t = base_t<decltype(*begin)>; // dirty type (I don't care cuz it will be cleaned in concepts)
 
                 for (auto it = begin; it != end; ++it) { // iterating on collection
                     if (it != begin) os << pretty_view_helper::collection_delimiter;
                     // if collection's element is collection or tuple himself
                     if constexpr (is_collection<elem_t> || is_tuple<elem_t>) os << pretty_view<elem_t>(*it); // wrap in proxy => recursion
-                    else os << *it; // else it's primitive or class/struct that isn'_t collection/tuple
+                    else os << *it; // else it's primitive or class/struct that isn't collection/tuple
                 }
 
                 os << pretty_view_helper::collection_postfix;
@@ -64,7 +64,7 @@ namespace rmsn {
                 // fun :) it's anonymous lambda that's unwrapping index sequence made from tuple
                 [&]<std::size_t... I>(std::index_sequence<I...>) {
                     ( // 67-77 lines will be applied for each unwrapped element from tuple
-                            ( // if that's the first element of tuple, don'_t write delimiter (before him)
+                            ( // if that's the first element of tuple, don't write delimiter (before him)
                                     I == 0 ? void() : void(os << pretty_view_helper::tuple_delimiter),
                                     [&]() { // another anonymous lambda that does the same logic that 52-57 lines
                                         const auto& elem = std::get<I>(pv._t); // std::get<I>(pv._t) gets an I-st element from tuple pv.t
