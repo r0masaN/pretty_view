@@ -20,9 +20,14 @@ where N is any collection or tuple-like thing (thanks to ADL nothing bad happens
 Structure of struct `pretty_view`:
 ```c++
 struct pretty_view {
-    const T& t;
-    const char *col_pref, *col_delim, *col_post, *tup_pref, *tup_delim, *tup_post;
+    const T& _t;
 };
 ```
-where **col = collection**, **tup = tuple**, **pref = prefix**, **post = postfix** and **delim = delimiter**
-Ofc you can set them yourself
+Also there are helping nested namespace `pretty_view_helper`:
+```c++
+namespace pretty_view_helper {
+    static const char *collection_prefix = "[", *collection_postfix = "]", *collection_delimiter = ", ",
+        *tuple_prefix = "{", *tuple_postfix = "}", *tuple_delimiter = ", ";
+}
+```
+Ofc you can set all of these parameters by yourself
