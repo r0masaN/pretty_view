@@ -30,7 +30,7 @@ namespace rmsn {
 
             // fun :) it's anonymous lambda that's unwrapping index sequence made from tuple
             [&os, &pv]<std::size_t... I>(std::index_sequence<I...>) {
-                ( // 67-77 lines will be applied for each unwrapped element from tuple
+                ( // 35-41 lines will be applied for each unwrapped element from tuple
                         ( // if that's the first element of tuple, don't write delimiter (before him)
                                 I == 0 ? void() : void(os << pretty_view_helper::tuple_delimiter),
                                         [&os, &pv]() { // another anonymous lambda that does the same logic that 52-57 lines
