@@ -21,7 +21,7 @@ template<typename K, typename V>
 [[deprecated("Use \"os << pretty_view{...}\" << instead")]]
 inline std::ostream& operator<<(std::ostream& os, const std::unordered_multimap<K, V>& umm) {
     os << MAP_PREFIX;
-    for (typename std::unordered_multimap<K, V>::iterator it = umm.begin(); it != umm.end(); ++it) {
+    for (typename std::unordered_multimap<K, V>::const_iterator it = umm.begin(); it != umm.end(); ++it) {
         if (it != umm.begin()) os << MAP_DELIMITER;
         os << *it;
     }

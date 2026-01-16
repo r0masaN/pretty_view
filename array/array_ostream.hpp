@@ -20,7 +20,7 @@ template<typename T, size_t S>
 [[deprecated("Use \"os << pretty_view{...}\" << instead")]]
 inline std::ostream& operator<<(std::ostream& os, const std::array<T, S>& a) {
     os << ARRAY_PREFIX;
-    for (typename std::array<T, S>::iterator it = a.begin(); it != a.end(); ++it) {
+    for (typename std::array<T, S>::const_iterator it = a.begin(); it != a.end(); ++it) {
         if (it != a.begin()) os << ARRAY_DELIMITER;
         os << *it;
     }
