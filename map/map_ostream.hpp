@@ -18,6 +18,7 @@
 #endif
 
 template<typename K, typename V>
+[[deprecated("Use \"os << pretty_view{...}\" << instead")]]
 inline std::ostream& operator<<(std::ostream& os, const std::map<K, V>& m) {
     os << MAP_PREFIX;
     for (typename std::map<K, V>::iterator it = m.begin(); it != m.end(); ++it) {

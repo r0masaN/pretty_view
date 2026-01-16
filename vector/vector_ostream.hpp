@@ -17,6 +17,7 @@
 #endif
 
 template<typename T>
+[[deprecated("Use \"os << pretty_view{...}\" << instead")]]
 inline std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
     os << VECTOR_PREFIX;
     for (typename std::vector<T>::iterator it = v.begin(); it != v.end(); ++it) {

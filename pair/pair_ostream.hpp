@@ -17,6 +17,7 @@
 #endif
 
 template<typename K, typename V>
+[[deprecated("Use \"os << pretty_view{...}\" << instead")]]
 inline std::ostream& operator<<(std::ostream& os, const std::pair<K, V>& p) {
     os << PAIR_PREFIX << p.first << PAIR_DELIMITER << p.second << PAIR_POSTFIX;
 

@@ -17,6 +17,7 @@
 #endif
 
 template<typename T>
+[[deprecated("Use \"os << pretty_view{...}\" << instead")]]
 inline std::ostream& operator<<(std::ostream& os, const std::initializer_list<T>& il) {
     os << INITIALIZER_LIST_PREFIX;
     for (typename std::initializer_list<T>::iterator it = il.begin(); it != il.end(); ++it) {

@@ -17,6 +17,7 @@
 #endif
 
 template<typename T>
+[[deprecated("Use \"os << pretty_view{...}\" << instead")]]
 inline std::ostream& operator<<(std::ostream& os, const std::forward_list<T>& fl) {
     os << LIST_PREFIX;
     for (typename std::forward_list<T>::iterator it = fl.begin(); it != fl.end(); ++it) {

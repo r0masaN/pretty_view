@@ -17,6 +17,7 @@
 #endif
 
 template<typename T>
+[[deprecated("Use \"os << pretty_view{...}\" << instead")]]
 inline std::ostream& operator<<(std::ostream& os, const std::multiset<T>& ms) {
     os << SET_PREFIX;
     for (typename std::multiset<T>::iterator it = ms.begin(); it != ms.end(); ++it) {
