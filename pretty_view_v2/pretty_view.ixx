@@ -1,4 +1,4 @@
-export module pretty_view;
+export module pretty_view_v2;
 
 import <concepts>;
 import <type_traits>;
@@ -28,7 +28,7 @@ namespace rmsn::pv::v2::detail { // inner namespace for helping tools
 
     // is the type is a collection-like (has iterators)
     template<typename T, typename BaseT = base_t<T>>
-    concept is_collection = std::is_array_v<BaseT> || requires {
+    concept is_collection = requires {
         std::begin(std::declval<BaseT&>()); // unified way to get an iterator instead of simple t.begin() that, for example, couldn't be
         std::end(std::declval<BaseT&>()); // invoked on raw arrays
     };
