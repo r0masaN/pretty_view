@@ -1,5 +1,15 @@
 # collections_io_streams
-Simple C++ library that complements 'std' by adding custom overloading for '&lt;&lt;' operators in 'iostream' for standard collections ('vector', 'map', etc.)
+Simple C++ library that complements 'std' by adding custom overloading for 'operator<<' n 'std::ostream' for standard collections ('vector', 'map', etc.) and more.
+
+###
+```c++
+std::vector<int> vec{1, 2, 3, 4, 5};
+rmsn::pretty_view pr_view{vec};
+std::cout << pr_view;
+```
+```text
+[1, 2, 3, 4, 5]
+```
 
 ## Usage of the `pretty_view`
 ### 1. Including and files
@@ -23,9 +33,9 @@ Or, directly:
 using rmsn::pretty_view;
 ```
 There are 3 namespaces, by the way:
-- `rmsn` with `pretty_view` class and overloaded `operator<<`,
-- `rmsn::format` with prefixes, delimiters and postfixes,
-- `rmsn::detail` with hidden technical helping tools like concepts.
+- `rmsn`: core `pretty_view` class and overloaded `operator<<` method,
+- `rmsn::format`: prefixes, delimiters and postfixes for formatting output,
+- `rmsn::detail`: hidden technical helping tools like concepts.
 
 ### 3. Formatting output
 If you want to customize prefixes, delimiters and postfixes, use:
@@ -63,7 +73,7 @@ As usually with `std::cout`, you can use `operator<<` with any `std::ostream` yo
 ```c++
 std::vector<int> v{1, 2, 3, 4, 5};
 rmsn::pretty_view pv{v};
-std::ostream os;
+std::ostream& os = std::cout; // just for example, you're free to use any possible std::ostream inheritor
 os << pv;
 ```
 ```text
@@ -98,4 +108,10 @@ concept is_tuple_like = requires {
 ```
 In the other words, if your something can provide `begin` and `end` iterators to iterate (collection-like) or can be used with `std::tuple_size_v<T>` and `std::get<I>(t)` – congratulations, you can use your innovation with `pretty_view` with much chill.
 
-String-like objects (`std::string`, `std::string_view`, `char *`) are printed like strings, not like a collection of chars. By the way, you can use any char type C++ is provided. By notice that arrays of chars (`char arr[] = "Hello, World!"`) actually are printed as a collection (array) of chars.
+String-like objects (`std::string`, `std::string_view`, `char *`) are printed like strings, not like a collection of chars. By the way, you can use any char type C++ is provided. But notice that arrays of chars (`char arr[] = "Hello, World!"`) actually are printed as a collection (array) of chars.
+
+### 7. Requirements
+- C++ standard version 20+,
+- G++/GCC (confirmed), MSVC & Clang/LLVM (potentially),
+- `-fmodules` compilation flag for module usage,
+- Windows, Linux, MacOS.
