@@ -82,5 +82,6 @@ concept is_tuple_like = requires {
     std::tuple_size<T>::value;
 };
 ```
-In the other words, if your something can provide `begin` and `end` iterators to iterate (collection-like) or can be used with `std::tuple_size_v<T>` and `std::get<I>(t)` – congratulations, you can use your innovation with `pretty_view` with much chill.
+In the other words, if your something can provide `begin` and `end` iterators to iterate (collection-like) or can be used with `std::tuple_size_v<T>` and `std::get<I>(t)` – congratulations, you can use your innovation with `pretty_view` with much chill. 
+
 String-like objects (`std::string`, `std::string_view`, `char *`) are printed like strings, not like a collection of chars. By the way, you can use any char type C++ is provided. By notice that arrays of chars (`char arr[] = "Hello, World!"`) actually are printed as a collection (array) of chars.
