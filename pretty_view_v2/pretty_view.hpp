@@ -1,5 +1,5 @@
-#ifndef PRETTY_VIEW_HPP
-#define PRETTY_VIEW_HPP
+#ifndef PRETTY_VIEW_V2_HPP
+#define PRETTY_VIEW_V2_HPP
 
 #include <concepts>
 #include <type_traits>
@@ -39,6 +39,10 @@ namespace rmsn::pv::v2::detail { // inner namespace for helping tools
     concept is_tuple_like = requires {
         std::tuple_size<BaseT>::value;
     };
+
+    // composite concept to not write chain of concepts every time
+    template<typename T, typename BaseT = base_t<T>>
+    concept is_collection_or_tuple_and_not_string_like = (detail::is_collection<BaseT> || detail::is_tuple_like<BaseT>) && !detail::is_string_like<BaseT>;
 }
 
 namespace rmsn::pv::v2::format { // global variables used in overloaded `operator<<`
@@ -48,8 +52,7 @@ namespace rmsn::pv::v2::format { // global variables used in overloaded `operato
 
 namespace rmsn::pv::v2 { // main namespace
     // declaration of the `operator<<`
-    template<typename T>
-    requires (detail::is_collection<T> || detail::is_tuple_like<T>) && (!detail::is_string_like<T>)
+    template<detail::is_collection_or_tuple_and_not_string_like T>
     inline std::ostream& operator<<(std::ostream& os, const T& t);
 }
 

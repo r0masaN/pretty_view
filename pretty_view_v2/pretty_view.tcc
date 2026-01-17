@@ -1,7 +1,6 @@
 namespace rmsn::pv::v2 {
     // realization of the `operator<<`
-    template<typename T>
-    requires (detail::is_collection<T> || detail::is_tuple_like<T>) && (!detail::is_string_like<T>)
+    template<detail::is_collection_or_tuple_and_not_string_like T>
     inline std::ostream& operator<<(std::ostream& os, const T& t) {
         if constexpr (detail::is_collection<T>) { // if type is collection
             os << format::collection_prefix;
