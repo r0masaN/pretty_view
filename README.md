@@ -1,5 +1,5 @@
 # collections_io_streams
-Simple C++ library that complements 'std' by adding custom overloading for 'operator<<' n 'std::ostream' for standard collections ('vector', 'map', etc.) and more.
+Simple C++ library that complements 'std' by adding custom overloading for 'operator<<' in 'std::ostream' for standard collections ('vector', 'map', etc.) and more.
 
 ###
 ```c++
@@ -33,7 +33,7 @@ Or, directly:
 using rmsn::pretty_view;
 ```
 There are 3 namespaces, by the way:
-- `rmsn`: core `pretty_view` class and overloaded `operator<<` method,
+- `rmsn`: core `pretty_view` class and overloaded `operator<<` function,
 - `rmsn::format`: prefixes, delimiters and postfixes for formatting output,
 - `rmsn::detail`: hidden technical helping tools like concepts.
 
@@ -64,7 +64,7 @@ rmsn::pretty_view pv1{mega_map};
 // sometimes it's hard for compiler to deduce actual type of structure so you need to
 // explicitly define it by yourself
 rmsn::pretty_view<decltype<mega_map>> pv2{mega_map}; // the easiest way
-rmsn::pretty_view<std::map<int, std::tuple<int, std::vector<int>, std::string>>> pv3{mega_map}; // the shiza way
+rmsn::pretty_view<std::map<int, std::tuple<int, std::vector<int>, std::string>>> pv3{mega_map}; // the 💀 way
 ```
 Wrapping is needed due to ADL mechanism in C++ which helps compiler to find correct `operator<<` overloading (mine). In simple words: adding new `operator<<` overloading in `std` namespace is unsafe and unreliable so we can have our own overloadings in ours namespaces. But you don't want write `rmsn::operator<<(std::cout, {1, 2, 3})`, right? That's when ADL appears: compiler sees `pretty_view` object from `rmsn` namespace and at first it looks at the current translation unit, after – at namespace `pretty_view` came from (which is `rmsn` where my `operator<<` overloading is placed).
 
