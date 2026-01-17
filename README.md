@@ -153,7 +153,7 @@ struct MyStruct {
     }
 };
 
-std::vector my_structs{
+std::vector<MyStruct> my_structs{
     {5, "Jeff"},
     {1, "Brent"}
 };
