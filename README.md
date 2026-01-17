@@ -1,33 +1,85 @@
 # collections_io_streams
-Simple C++ library that complements 'std' by adding custom overloading for '&lt;&lt;' and '>>' operators in 'iostream' for standard collections ('vector', 'map', etc.)
-
-## Usage for 'ostream'
-0. if you use your custom type 'U', you should write your own overloading 'std::ostream& operator<<(std::ostream&, U&)' for correct work!
-1. depending on collection type, '#define \[COLLECTION\]_PREFIX/DELIMITER/POSTFIX "..."' if you need custom prefix, delimiter or postfix (by default it's "\[", ", " and "\]" for all collections and "{", ": " and "}" for 'pair')
-2. #include needed header ('\[collection\]_ostream.hpp')
-3. easily print selected collection with any 'ostream' with '<<' like default types
-
-## UPD:
-Everything in all folders **except** `pretty_view` is bullshit for toddlers from kindergarten)
-The **real** unified tool for cozy writing in ostream is pretty_view.hpp thing) it's freaking wild.
-And I've spent literally 6+ hours in a row for this 🤪
+Simple C++ library that complements 'std' by adding custom overloading for '&lt;&lt;' operators in 'iostream' for standard collections ('vector', 'map', etc.)
 
 ## Usage of the `pretty_view`
+Include pretty_view's header:
 ```c++
-std::ostream << rmsn::pretty_view(N);
+#include "pretty_view\pretty_view.hpp"
 ```
-where N is any collection or tuple-like thing (thanks to ADL nothing bad happens with this overloading)
-Structure of struct `pretty_view`:
+Or import module:
 ```c++
-struct pretty_view {
-    const U& t_;
+import pretty_view;
+```
+Module's file `pretty_view.ixx` is located at the same directory.
+
+If you don't want to write `rmsn::` every time:
+```c++
+using rmsn;
+```
+Or, directly:
+```c++
+using rmsn::pretty_view;
+```
+
+If you want to customize prefixes, delimiters and postfixes, use:
+```c++
+rmsn::format::collection_prefix = "[", rmsn::format::collection_delimiter = ", ", rmsn::format::collection_postfix = "]";
+rmsn::format::tuple_prefix = "{", rmsn::format::tuple_delimiter = ", ", rmsn::format::tuple_postfix = "}";
+```
+You can set these `const char *` variables to whatever you want.
+
+Wrap array/collection/tuple/etc. you want to print in `pretty_view` class:
+```c++
+std::vector<int> v{1, 2, 3, 4, 5}; // for example
+rmsn::pretty_view pv{v};
+```
+You can also wrap structures of varying complex degrees of nesting:
+```c++
+std::map<int, std::tuple<int, std::vector<int>, std::string>> mega_map{
+    {18, {10, {1, 2, 3}, "cat"}},
+    {24, {48, {4, 51}, "dog"}}
+};
+rmsn::pretty_view pv1{mega_map};
+// sometimes it's hard for compiler to deduce actual type of structure so you need to
+// explicitly define it by yourself
+rmsn::pretty_view<decltype<mega_map>> pv2{mega_map};
+rmsn::pretty_view<std::map<int, std::tuple<int, std::vector<int>, std::string>>> pv3{mega_map};
+```
+
+As usually with `std::cout`, you can use `operator<<` with any `std::ostream` you want, just pass into it `pretty_view` object:
+```c++
+std::vector<int> v{1, 2, 3, 4, 5};
+rmsn::pretty_view pv{v};
+std::ostream os;
+os << pv;
+```
+```text
+[1, 2, 3, 4, 5]
+```
+
+Enjoy the results :)
+```c++
+std::map<int, std::tuple<int, std::vector<int>, std::string>> mega_map{
+    {18, {10, {1, 2, 3}, "cat"}},
+    {24, {48, {4, 51}, "dog"}}
+};
+std::cout << rmsn::pretty_view{mega_map};
+```
+```text
+[{18, {10, [1, 2, 3], cat}}, {24, {48, [4, 51], dog}}]
+```
+
+The best thing is you can use your own collections or whatever you have coded, it just must satisfy the concepts `is_collection` or `is_tuple_like` from `rmsn::detail`, there are simplified representations:
+```c++
+template<typename T>
+concept is_collection = std::is_array_v<T> || requires (const T& t) {
+    std::begin(t);
+    std::end(t);
+};
+
+template<typename T>
+concept is_tuple_like = requires {
+    std::tuple_size<BaseT>::value;
 };
 ```
-Also there are helping nested namespace `pretty_view_helper`:
-```c++
-namespace pretty_view_helper {
-    static const char *collection_prefix = "[", *collection_postfix = "]", *collection_delimiter = ", ",
-        *tuple_prefix = "{", *tuple_postfix = "}", *tuple_delimiter = ", ";
-}
-```
-Ofc you can set all of these parameters by yourself
+In the other words, if your something can provide `begin` and `end` iterators to iterate (collection-like) or can be used with `std::tuple_size_v<T>` and `std::get<I>(t)` – congratulations, you can use your innovation with `pretty_view` with much chill.

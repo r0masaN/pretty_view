@@ -8,13 +8,7 @@
 #include <tuple>
 #include <ostream>
 
-namespace rmsn {
-    // global variables used in pretty_view.operator<<
-    namespace pretty_view_helper {
-        static const char *collection_prefix = "[", *collection_postfix = "]", *collection_delimiter = ", ",
-            *tuple_prefix = "{", *tuple_postfix = "}", *tuple_delimiter = ", ";
-    }
-
+namespace rmsn::detail { // inner namespace for helping tools
     // get pure, clear type (without const, volatile qualifiers, reference)
     template<typename T>
     using base_t = std::remove_cvref_t<T>;
@@ -22,14 +16,14 @@ namespace rmsn {
     // literally determines if given type is char-like (helping concept for is_string_like)
     template<typename T, typename BaseT = base_t<T>>
     concept is_char_like = std::same_as<BaseT, char> || std::same_as<BaseT, wchar_t> ||
-        std::same_as<BaseT, char8_t> || std::same_as<BaseT, char16_t> || std::same_as<BaseT, char32_t>;
+                           std::same_as<BaseT, char8_t> || std::same_as<BaseT, char16_t> || std::same_as<BaseT, char32_t>;
 
     // is the type is a string-like (need to ensure that we won't write a string-like type char by char like it's array of chars)
     template<typename T, typename BaseT = base_t<T>>
     concept is_string_like = std::is_pointer_v<BaseT> && is_char_like<std::remove_pointer_t<BaseT>> || // (any char)-like pointer
-        is_char_like<typename BaseT::value_type> && // or is it (any char)-based std::basic_string or std::basic_string_view
-                (std::same_as<BaseT, std::basic_string<typename BaseT::value_type>> ||
-                std::same_as<BaseT, std::basic_string_view<typename BaseT::value_type>>);
+                             is_char_like<typename BaseT::value_type> && // or is it (any char)-based std::basic_string or std::basic_string_view
+                             (std::same_as<BaseT, std::basic_string<typename BaseT::value_type>> ||
+                              std::same_as<BaseT, std::basic_string_view<typename BaseT::value_type>>);
 
     // is the type is a collection-like (has iterators)
     template<typename T, typename BaseT = base_t<T>>
@@ -43,10 +37,17 @@ namespace rmsn {
     concept is_tuple_like = requires {
         std::tuple_size<BaseT>::value;
     };
+}
 
+namespace rmsn::format { // global variables used in pretty_view.operator<<
+    inline constinit const char *collection_prefix = "[", *collection_postfix = "]", *collection_delimiter = ", ",
+            *tuple_prefix = "{", *tuple_postfix = "}", *tuple_delimiter = ", ";
+}
+
+namespace rmsn { // main namespace
     // declaration of the struct (to be visible in the following operator<<)
     template<typename T>
-    requires is_collection<T> || is_tuple_like<T>
+    requires detail::is_collection<T> || detail::is_tuple_like<T>
     class pretty_view;
 
     // declaration of the operator<<
@@ -55,7 +56,7 @@ namespace rmsn {
 
     // simple proxy class for collections and tuples (to prevent ADL from breaking overloadings or messing with some shit in std)
     template<typename T>
-    requires is_collection<T> || is_tuple_like<T>
+    requires detail::is_collection<T> || detail::is_tuple_like<T>
     class pretty_view {
     public:
         constexpr explicit pretty_view(const T& t) noexcept;
@@ -73,7 +74,7 @@ namespace rmsn {
         friend inline std::ostream& operator<<(std::ostream& os, const pretty_view<U>& pv);
 
     private:
-        const base_t<T>& t_;
+        const detail::base_t<T>& t_;
     };
 }
 
