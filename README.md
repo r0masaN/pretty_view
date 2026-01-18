@@ -41,12 +41,12 @@ There are 3 namespaces, by the way:
 ### 3. Formatting output
 If you want to customize prefixes, delimiters and postfixes, use:
 ```c++
-[const char *] rmsn::pv::[VERSION]::format::collection_prefix = "[";
-[const char *] rmsn::pv::[VERSION]::format::collection_delimiter = ", ";
-[const char *] rmsn::pv::[VERSION]::format::collection_postfix = "]";
-[const char *] rmsn::pv::[VERSION]::format::tuple_prefix = "{";
-[const char *] rmsn::pv::[VERSION]::format::tuple_delimiter = ", ";
-[const char *] rmsn::pv::[VERSION]::format::tuple_postfix = "}";
+rmsn::pv::[VERSION]::format::collection_prefix = "[";
+rmsn::pv::[VERSION]::format::collection_delimiter = ", ";
+rmsn::pv::[VERSION]::format::collection_postfix = "]";
+rmsn::pv::[VERSION]::format::tuple_prefix = "{";
+rmsn::pv::[VERSION]::format::tuple_delimiter = ", ";
+rmsn::pv::[VERSION]::format::tuple_postfix = "}";
 ```
 Default values are demonstrated above. You can set these variables to whatever you want. It's just simple global state for any `pretty_view` object (will reinvent it in the future maybe), not (!) thread safe for now.
 
@@ -133,9 +133,9 @@ There are simplified representations:
 ```c++
 template<typename T>
 concept is_collection_or_tuple_and_not_string_like =
-        (detail::is_collection<BaseT> // is given type a collection or array
-        || detail::is_tuple_like<BaseT>) // or is it a tuple or tuple-like (pair, for example)
-        && !detail::is_string_like<BaseT>; // and is it not a string-like (string, string_view, raw char array etc.)
+        (is_collection<T> // is given type a collection or array
+        || is_tuple_like<T>) // or is it a tuple or tuple-like (pair, for example)
+        && !is_string_like<T>; // and is it not a string-like (string, string_view, raw char array etc.)
 ```
 If your something is satisfying it – congratulations, you can use your invention with `pretty_view` with much chill.
 
@@ -164,7 +164,7 @@ std::cout << my_structs;
 ```
 
 ### 7. Requirements
-- C++ standard version 20+,
+- C++ standard version 20+ (23+ for modules),
 - G++/GCC (confirmed), MSVC & Clang/LLVM (potentially),
 - `-fmodules` compilation flag for module usage,
 - Windows, Linux, MacOS.
