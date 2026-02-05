@@ -12,8 +12,12 @@
 #include <valarray>
 #include <tuple>
 #include <string>
+#include <string_view>
 
 #include "pretty_view\pretty_view.hpp"
+
+using namespace std::string_literals;
+using namespace std::string_view_literals;
 
 using namespace rmsn::pv;
 
@@ -52,7 +56,7 @@ namespace {
 
     public:
         template<typename String, typename Vector>
-        requires std::is_convertible_v<String, std::string> && std::is_same_v<Vector, std::vector<std::uint16_t>>
+        requires requires (const String& string) { std::string{string}; } && std::is_same_v<Vector, std::vector<std::uint16_t>>
         explicit student(const std::uint8_t age, String&& name, const gender gender, Vector&& marks) noexcept :
                 age_{age}, name_{std::forward<String>(name)}, gender_{gender}, marks_{std::forward<Vector>(marks)}
         {}
@@ -150,8 +154,8 @@ int main() {
     std::vector<student> students;
     students.reserve(4);
     students.emplace_back(22, "Roman", gender::MALE, std::vector<std::uint16_t>{4, 5, 3, 4});
-    students.emplace_back(22, "Vadim", gender::MALE, std::vector<std::uint16_t>{3, 5, 4});
-    students.emplace_back(21, "Anna", gender::FEMALE, std::vector<std::uint16_t>{3, 4, 3, 2});
+    students.emplace_back(22, "Vadim"s, gender::MALE, std::vector<std::uint16_t>{3, 5, 4});
+    students.emplace_back(21, "Anna"sv, gender::FEMALE, std::vector<std::uint16_t>{3, 4, 3, 2});
     students.emplace_back(18, "Vanrye", gender::MALE, std::vector<std::uint16_t>{5, 5, 5, 5, 5});
     test("vector<custom_type>", students);
 
