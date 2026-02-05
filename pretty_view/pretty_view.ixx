@@ -1,4 +1,4 @@
-export module pretty_view_v1;
+export module pretty_view;
 
 import <concepts>;
 import <type_traits>;
@@ -7,7 +7,7 @@ import <string_view>;
 import <tuple>;
 import <ostream>;
 
-namespace rmsn::pv::v1::detail { // inner namespace for helping tools
+namespace rmsn::pv::detail { // inner namespace for helping tools
     // get pure, clear type (without const, volatile qualifiers, reference)
     template<typename T>
     using base_t = std::remove_cvref_t<T>;
@@ -41,15 +41,24 @@ namespace rmsn::pv::v1::detail { // inner namespace for helping tools
 
     // composite concept to not write chain of concepts every time
     template<typename T, typename BaseT = base_t<T>>
-    concept is_collection_or_tuple_and_not_string_like = (detail::is_collection<BaseT> || detail::is_tuple_like<BaseT>) && !detail::is_string_like<BaseT>;
+    concept is_collection_or_tuple_and_not_string_like = (detail::is_collection<BaseT> || detail::is_tuple_like<BaseT>) &&
+        !detail::is_string_like<BaseT>;
 }
 
-export namespace rmsn::pv::v1::format { // global variables used in pretty_view.operator<<
+export namespace rmsn::pv::format { // global variables used in pretty_view.operator<<
     inline constinit const char *collection_prefix = "[", *collection_postfix = "]", *collection_delimiter = ", ",
         *tuple_prefix = "{", *tuple_postfix = "}", *tuple_delimiter = ", ";
 }
 
-export namespace rmsn::pv::v1 {
+export namespace rmsn::pv {
+/**
+ * The 1st way: <br>
+ * - no "using rmsn::pv" needed; <br>
+ * - pretty_view wrapper for collection/tuple needed; <br>
+ * - operator<< overloading will be found due to ADL; <br>
+ * - operator<< overloading will be selected due to concrete param type (pretty_view<...>).
+*/
+
     // declaration of the struct (to be visible in the following operator<<)
     template<detail::is_collection_or_tuple_and_not_string_like T>
     class pretty_view;
@@ -116,6 +125,55 @@ export namespace rmsn::pv::v1 {
                         ... // unwrapping variadic pack
                 );
             }(std::make_index_sequence<std::tuple_size_v<detail::base_t<U>>>{}); // here comes an index sequence + immediately invocation
+
+            os << format::tuple_postfix;
+        } // there are no other if-else branches cuz we work here only with collections and tuples
+
+        return os;
+    }
+
+
+/**
+ * The 2nd way: <br>
+ * - "using rmsn::pv" needed; <br>
+ * - no wrappers needed; <br>
+ * - operator<< overloading will be found due to ADL; <br>
+ * - operator<< overloading will be selected due to concept (is_collection_or_tuple_and_not_string_like<...>).
+*/
+
+    // declaration of the `operator<<`
+    template<detail::is_collection_or_tuple_and_not_string_like T>
+    inline std::ostream& operator<<(std::ostream& os, const T& t);
+
+    // realization of the `operator<<`
+    template<detail::is_collection_or_tuple_and_not_string_like T>
+    inline std::ostream& operator<<(std::ostream& os, const T& t) {
+        if constexpr (detail::is_collection<T>) { // if type is collection
+            os << format::collection_prefix;
+
+            const auto begin = std::begin(t), end = std::end(t);
+            for (auto it = begin; it != end; ++it) { // iterating on collection
+                if (it != begin) os << format::collection_delimiter;
+                os << *it;
+            }
+
+            os << format::collection_postfix;
+
+        } else if constexpr (detail::is_tuple_like<T>) { // if type is tuple
+            os << format::tuple_prefix;
+
+            // fun :) it's anonymous lambda that's unwrapping index sequence made from tuple
+            [&os, &t]<std::size_t... I>(const std::index_sequence<I...>&) {
+                ( // 24-27 lines will be applied for each unwrapped element from tuple
+                        ( // if that's the first element of tuple, don't write delimiter (before him)
+                                I == 0 ? void() : void(os << format::tuple_delimiter),
+                                        [&os, &t]() { // another anonymous lambda that does the same logic that 52-57 lines
+                                            os << std::get<I>(t); // std::get<I>(t) gets an I-st element from tuple t
+                                        }() // immediately invoke this lambda
+                        ),
+                        ... // unwrapping variadic pack
+                );
+            }(std::make_index_sequence<std::tuple_size_v<detail::base_t<T>>>{}); // here comes an index sequence + immediately invocation
 
             os << format::tuple_postfix;
         } // there are no other if-else branches cuz we work here only with collections and tuples

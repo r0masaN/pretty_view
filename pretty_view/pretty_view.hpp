@@ -1,5 +1,5 @@
-#ifndef PRETTY_VIEW_V1_HPP
-#define PRETTY_VIEW_V1_HPP
+#ifndef PRETTY_VIEW_HPP
+#define PRETTY_VIEW_HPP
 
 #include <concepts>
 #include <type_traits>
@@ -8,7 +8,7 @@
 #include <tuple>
 #include <ostream>
 
-namespace rmsn::pv::v1::detail { // inner namespace for helping tools
+namespace rmsn::pv::detail { // inner namespace for helping tools
     // get pure, clear type (without const, volatile qualifiers, reference)
     template<typename T>
     using base_t = std::remove_cvref_t<T>;
@@ -42,15 +42,26 @@ namespace rmsn::pv::v1::detail { // inner namespace for helping tools
 
     // composite concept to not write chain of concepts every time
     template<typename T, typename BaseT = base_t<T>>
-    concept is_collection_or_tuple_and_not_string_like = (detail::is_collection<BaseT> || detail::is_tuple_like<BaseT>) && !detail::is_string_like<BaseT>;
+    concept is_collection_or_tuple_and_not_string_like = (detail::is_collection<BaseT> || detail::is_tuple_like<BaseT>) &&
+        !detail::is_string_like<BaseT>;
+
+    // TODO traits like concepts for [C++03; C++20) standards support
 }
 
-namespace rmsn::pv::v1::format { // global variables used in pretty_view.operator<<
+namespace rmsn::pv::format { // global variables used in pretty_view.operator<<
     inline constinit const char *collection_prefix = "[", *collection_postfix = "]", *collection_delimiter = ", ",
         *tuple_prefix = "{", *tuple_postfix = "}", *tuple_delimiter = ", ";
 }
 
-namespace rmsn::pv::v1 { // main namespace
+namespace rmsn::pv {
+/**
+ * The 1st way: <br>
+ * - no "using rmsn::pv" needed; <br>
+ * - pretty_view wrapper for collection/tuple needed; <br>
+ * - operator<< overloading will be found due to ADL; <br>
+ * - operator<< overloading will be selected due to concrete param type (pretty_view<...>).
+*/
+
     // declaration of the struct (to be visible in the following operator<<)
     template<detail::is_collection_or_tuple_and_not_string_like T>
     class pretty_view;
@@ -64,15 +75,15 @@ namespace rmsn::pv::v1 { // main namespace
     template<detail::is_collection_or_tuple_and_not_string_like T>
     class pretty_view {
     public:
-        constexpr explicit pretty_view(const T& t) noexcept;
+        explicit pretty_view(const T& t) noexcept;
 
-        constexpr pretty_view(const pretty_view<T>& other) noexcept;
+        pretty_view(const pretty_view<T>& other) noexcept;
 
-        constexpr pretty_view(pretty_view<T>&& other) noexcept = delete;
+        pretty_view(pretty_view<T>&& other) = delete;
 
-        constexpr pretty_view& operator=(const pretty_view<T>& other) noexcept = delete;
+        pretty_view& operator=(const pretty_view<T>& other) = delete;
 
-        constexpr pretty_view& operator=(pretty_view<T>&& other) noexcept = delete;
+        pretty_view& operator=(pretty_view<T>&& other) = delete;
 
         // declaration that that operator<< is friend (has access to private fields)
         template<typename U>
@@ -81,6 +92,22 @@ namespace rmsn::pv::v1 { // main namespace
     private:
         const detail::base_t<T>& t_;
     };
+
+    template<typename T>
+    pretty_view(T) -> pretty_view<T>;
+
+
+/**
+ * The 2nd way: <br>
+ * - "using rmsn::pv" needed; <br>
+ * - no wrappers needed; <br>
+ * - operator<< overloading will be found due to ADL; <br>
+ * - operator<< overloading will be selected due to concept (is_collection_or_tuple_and_not_string_like<...>).
+*/
+
+    // declaration of the `operator<<`
+    template<detail::is_collection_or_tuple_and_not_string_like T>
+    inline std::ostream& operator<<(std::ostream& os, const T& t);
 }
 
 #include "pretty_view.tcc" // realization of template methods/functions
