@@ -13,16 +13,62 @@
 #include <tuple>
 #include <string>
 
-#include "pretty_view.hpp"
+#include "pretty_view\pretty_view.hpp"
 
 using namespace rmsn::pv;
 
 template<typename T>
 void test(const char *const name, const T& value) {
+    std::cout << std::string(10, '-') << "\n";
     std::cout << "TEST " << name << "\n";
-    std::cout << "\t1st way: " << pretty_view{value} << "\n";
-    std::cout << "\t2st way: " <<  value << "\n";
+    std::cout << "1st way:\n" << pretty_view{value} << "\n";
+    std::cout << "2st way:\n" <<  value << "\n";
+    std::cout << std::string(10, '-') << "\n";
 }
+
+namespace {
+    enum class gender {
+        MALE,
+        FEMALE
+    };
+
+    std::string to_string(const gender& gender) {
+        switch (gender) {
+            case gender::MALE:
+                return "male";
+            case gender::FEMALE:
+                return "female";
+            default:
+                return "";
+        }
+    }
+
+    class student {
+    private:
+        std::uint8_t age_;
+        std::string name_;
+        gender gender_;
+        std::vector<std::uint16_t> marks_;
+
+    public:
+        template<typename String, typename Vector>
+        requires std::is_convertible_v<String, std::string> && std::is_same_v<Vector, std::vector<std::uint16_t>>
+        explicit student(const std::uint8_t age, String&& name, const gender gender, Vector&& marks) noexcept :
+                age_{age}, name_{std::forward<String>(name)}, gender_{gender}, marks_{std::forward<Vector>(marks)}
+        {}
+
+        friend std::ostream& operator<<(std::ostream& os, const student& student) {
+            os << "student[\n"
+               << "\tage=" << +student.age_ << ",\n"
+               << "\tname=" << student.name_ << ",\n"
+               << "\tgender=" << to_string(student.gender_) << ",\n"
+               << "\tmarks=" << student.marks_ << "\n"
+               << "]";
+
+            return os;
+        }
+    };
+};
 
 int main() {
     int arr[] = {1, 2, 3, 4, 5};
@@ -100,6 +146,14 @@ int main() {
     int raw[4] = {1, 2, 3, 4};
     std::span s(raw);
     test("std::span", s);
+
+    std::vector<student> students;
+    students.reserve(4);
+    students.emplace_back(22, "Roman", gender::MALE, std::vector<std::uint16_t>{4, 5, 3, 4});
+    students.emplace_back(22, "Vadim", gender::MALE, std::vector<std::uint16_t>{3, 5, 4});
+    students.emplace_back(21, "Anna", gender::FEMALE, std::vector<std::uint16_t>{3, 4, 3, 2});
+    students.emplace_back(18, "Vanrye", gender::MALE, std::vector<std::uint16_t>{5, 5, 5, 5, 5});
+    test("vector<custom_type>", students);
 
     return 0;
 }
