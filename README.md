@@ -166,7 +166,7 @@ std::cout << my_structs;
 ```
 
 ### 7. Ongoing updates
-- C++11, C++24 support;
+- C++11, C++14 support;
 - thread-safe support;
 - 3rd way (ostream wrapper).
 
