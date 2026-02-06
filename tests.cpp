@@ -13,6 +13,7 @@
 #include <tuple>
 #include <string>
 #include <string_view>
+#include <cstdint>
 
 #include "pretty_view\pretty_view.hpp"
 
@@ -78,7 +79,7 @@ int main() {
     int arr[] = {1, 2, 3, 4, 5};
     test("int arr[]", arr);
 
-    test("vector<int>", std::vector{1, 2, 3});
+    test("vector<int>", std::vector<int>{1, 2, 3});
     test("list<int>", std::list{1, 2, 3});
     test("forward_list<int>", std::forward_list<int>{1, 2, 3});
     test("deque<int>", std::deque{4, 5, 6});

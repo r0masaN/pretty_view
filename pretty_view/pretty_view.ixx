@@ -72,15 +72,15 @@ export namespace rmsn::pv {
     template<detail::is_collection_or_tuple_and_not_string_like T>
     class pretty_view {
     public:
-        constexpr explicit pretty_view(const T& t) noexcept : t_(t) {}
+        explicit pretty_view(const T& t) noexcept : t_(t) {}
 
-        constexpr pretty_view(const pretty_view<T>& other) noexcept : t_(other.t_) {}
+        pretty_view(const pretty_view<T>& other) = delete;
 
-        constexpr pretty_view(pretty_view<T>&& other) noexcept = delete;
+        pretty_view(pretty_view<T>&& other) noexcept = delete;
 
-        constexpr pretty_view& operator=(const pretty_view<T>& other) noexcept = delete;
+        pretty_view& operator=(const pretty_view<T>& other) noexcept = delete;
 
-        constexpr pretty_view& operator=(pretty_view<T>&& other) noexcept = delete;
+        pretty_view& operator=(pretty_view<T>&& other) noexcept = delete;
 
         // declaration that that operator<< is friend (has access to private fields)
         template<typename U>
