@@ -7,7 +7,7 @@ import <string_view>;
 import <tuple>;
 import <ostream>;
 
-namespace rmsn::detail { // inner namespace for helping tools
+namespace rmsn::dtl { // inner namespace for helping tools
     // get pure, clear type (without const, volatile qualifiers, reference)
     template<typename T>
     using base_t = std::remove_cvref_t<T>;
@@ -41,11 +41,11 @@ namespace rmsn::detail { // inner namespace for helping tools
 
     // composite concept to not write chain of concepts every time
     template<typename T, typename BaseT = base_t<T>>
-    concept is_collection_or_tuple_and_not_string_like = (detail::is_collection<BaseT> || detail::is_tuple_like<BaseT>) &&
-        !detail::is_string_like<BaseT>;
+    concept is_collection_or_tuple_and_not_string_like = (dtl::is_collection<BaseT> || dtl::is_tuple_like<BaseT>) &&
+                                                         !dtl::is_string_like<BaseT>;
 }
 
-export namespace rmsn::format { // global variables used in pretty_view.operator<<
+export namespace rmsn::fmt { // global variables used in pretty_view.operator<<
     inline constinit const char *collection_prefix = "[", *collection_postfix = "]", *collection_delimiter = ", ",
         *tuple_prefix = "{", *tuple_postfix = "}", *tuple_delimiter = ", ";
 }
@@ -60,7 +60,7 @@ export namespace rmsn {
 */
 
     // declaration of the struct (to be visible in the following operator<<)
-    template<detail::is_collection_or_tuple_and_not_string_like T>
+    template<dtl::is_collection_or_tuple_and_not_string_like T>
     class pretty_view;
 
     // declaration of the operator<<
@@ -69,7 +69,7 @@ export namespace rmsn {
 
     // simple proxy class for collections and tuples (to prevent ADL from breaking overloadings or messing with some shit in std)
     // TODO proxy contains things from `format` => `operator<<` overloading becomes thread-safe
-    template<detail::is_collection_or_tuple_and_not_string_like T>
+    template<dtl::is_collection_or_tuple_and_not_string_like T>
     class pretty_view {
     public:
         explicit pretty_view(const T& t) noexcept : t_(t) {}
@@ -87,46 +87,46 @@ export namespace rmsn {
         friend std::ostream& operator<<(std::ostream& os, const pretty_view<U>& pv);
 
     private:
-        const detail::base_t<T>& t_;
+        const dtl::base_t<T>& t_;
     };
 
     // realization of the operator<<
     template<typename U>
     std::ostream& operator<<(std::ostream& os, const pretty_view<U>& pv) {
-        if constexpr (detail::is_collection<U>) { // if proxy contains collection
-            os << format::collection_prefix;
+        if constexpr (dtl::is_collection<U>) { // if proxy contains collection
+            os << fmt::collection_prefix;
 
             const auto begin = std::begin(pv.t_), end = std::end(pv.t_);
-            using elem_t = detail::base_t<decltype(*begin)>;
+            using elem_t = dtl::base_t<decltype(*begin)>;
 
             for (auto it = begin; it != end; ++it) { // iterating on collection
-                if (it != begin) os << format::collection_delimiter;
+                if (it != begin) os << fmt::collection_delimiter;
                 // if collection's element is collection or tuple himself
-                if constexpr (detail::is_collection_or_tuple_and_not_string_like<elem_t>) os << pretty_view(*it); // wrap in proxy => recursion
+                if constexpr (dtl::is_collection_or_tuple_and_not_string_like<elem_t>) os << pretty_view(*it); // wrap in proxy => recursion
                 else os << *it; // else it's primitive or class/struct that isn't collection/tuple
             }
 
-            os << format::collection_postfix;
+            os << fmt::collection_postfix;
 
-        } else if constexpr (detail::is_tuple_like<U>) { // if proxy contains tuple
-            os << format::tuple_prefix;
+        } else if constexpr (dtl::is_tuple_like<U>) { // if proxy contains tuple
+            os << fmt::tuple_prefix;
 
             // fun :) it's anonymous lambda that's unwrapping index sequence made from tuple
             [&os, &pv]<std::size_t... I>(const std::index_sequence<I...>&) {
                 ( // 35-41 lines will be applied for each unwrapped element from tuple
                         ( // if that's the first element of tuple, don't write delimiter (before him)
-                                I == 0 ? void() : void(os << format::tuple_delimiter),
+                                I == 0 ? void() : void(os << fmt::tuple_delimiter),
                                         [&os, &pv]() { // another anonymous lambda that does the same logic that 52-57 lines
                                             const auto& elem = std::get<I>(pv.t_); // std::get<I>(pv.t_) gets an I-st element from tuple pv.t
-                                            if constexpr (detail::is_collection_or_tuple_and_not_string_like<detail::base_t<decltype(elem)>>) os << pretty_view(elem);
+                                            if constexpr (dtl::is_collection_or_tuple_and_not_string_like<dtl::base_t<decltype(elem)>>) os << pretty_view(elem);
                                             else os << elem;
                                         }() // immediately invoke this lambda
                         ),
                         ... // unwrapping variadic pack
                 );
-            }(std::make_index_sequence<std::tuple_size_v<detail::base_t<U>>>{}); // here comes an index sequence + immediately invocation
+            }(std::make_index_sequence < std::tuple_size_v < dtl::base_t<U>>>{}); // here comes an index sequence + immediately invocation
 
-            os << format::tuple_postfix;
+            os << fmt::tuple_postfix;
         } // there are no other if-else branches cuz we work here only with collections and tuples
 
         return os;
@@ -142,40 +142,40 @@ export namespace rmsn {
 */
 
     // declaration of the `operator<<`
-    template<detail::is_collection_or_tuple_and_not_string_like T>
+    template<dtl::is_collection_or_tuple_and_not_string_like T>
     inline std::ostream& operator<<(std::ostream& os, const T& t);
 
     // realization of the `operator<<`
-    template<detail::is_collection_or_tuple_and_not_string_like T>
+    template<dtl::is_collection_or_tuple_and_not_string_like T>
     inline std::ostream& operator<<(std::ostream& os, const T& t) {
-        if constexpr (detail::is_collection<T>) { // if type is collection
-            os << format::collection_prefix;
+        if constexpr (dtl::is_collection<T>) { // if type is collection
+            os << fmt::collection_prefix;
 
             const auto begin = std::begin(t), end = std::end(t);
             for (auto it = begin; it != end; ++it) { // iterating on collection
-                if (it != begin) os << format::collection_delimiter;
+                if (it != begin) os << fmt::collection_delimiter;
                 os << *it;
             }
 
-            os << format::collection_postfix;
+            os << fmt::collection_postfix;
 
-        } else if constexpr (detail::is_tuple_like<T>) { // if type is tuple
-            os << format::tuple_prefix;
+        } else if constexpr (dtl::is_tuple_like<T>) { // if type is tuple
+            os << fmt::tuple_prefix;
 
             // fun :) it's anonymous lambda that's unwrapping index sequence made from tuple
             [&os, &t]<std::size_t... I>(const std::index_sequence<I...>&) {
                 ( // 24-27 lines will be applied for each unwrapped element from tuple
                         ( // if that's the first element of tuple, don't write delimiter (before him)
-                                I == 0 ? void() : void(os << format::tuple_delimiter),
+                                I == 0 ? void() : void(os << fmt::tuple_delimiter),
                                         [&os, &t]() { // another anonymous lambda that does the same logic that 52-57 lines
                                             os << std::get<I>(t); // std::get<I>(t) gets an I-st element from tuple t
                                         }() // immediately invoke this lambda
                         ),
                         ... // unwrapping variadic pack
                 );
-            }(std::make_index_sequence<std::tuple_size_v<detail::base_t<T>>>{}); // here comes an index sequence + immediately invocation
+            }(std::make_index_sequence < std::tuple_size_v < dtl::base_t<T>>>{}); // here comes an index sequence + immediately invocation
 
-            os << format::tuple_postfix;
+            os << fmt::tuple_postfix;
         } // there are no other if-else branches cuz we work here only with collections and tuples
 
         return os;

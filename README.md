@@ -35,18 +35,18 @@ using namespace rmsn;
 ```
 There are 3 namespaces, by the way:
 - `rmsn`: core `pretty_view` class and overloaded `operator<<` function,
-- `rmsn::format`: prefixes, delimiters and postfixes for formatting output,
-- `rmsn::detail`: hidden technical helping tools like concepts.
+- `rmsn::fmt`: prefixes, delimiters and postfixes for formatting output,
+- `rmsn::dtl`: hidden technical helping tools like concepts.
 
 ### 3. Formatting output
 If you want to customize prefixes, delimiters and postfixes, use:
 ```c++
-rmsn::format::collection_prefix = "[";
-rmsn::format::collection_delimiter = ", ";
-rmsn::format::collection_postfix = "]";
-rmsn::format::tuple_prefix = "{";
-rmsn::format::tuple_delimiter = ", ";
-rmsn::format::tuple_postfix = "}";
+rmsn::fmt::collection_prefix = "[";
+rmsn::fmt::collection_delimiter = ", ";
+rmsn::fmt::collection_postfix = "]";
+rmsn::fmt::tuple_prefix = "{";
+rmsn::fmt::tuple_delimiter = ", ";
+rmsn::fmt::tuple_postfix = "}";
 ```
 Default values are demonstrated above. You can set these variables to whatever you want. It's just simple global state for any `pretty_view` object (will reinvent it in the future maybe), not (!) thread safe for now.
 
@@ -73,6 +73,21 @@ rmsn::pretty_view<std::map<int, std::tuple<int, std::vector<int>, std::string>>>
 Wrapping is needed due to ADL mechanism in C++ which helps compiler to find correct `operator<<` overloading (mine) without explicit specifying a specific namespace.
 
 In simple words: adding new `operator<<` overloading in `std` namespace is unsafe and unreliable so we can have our own overloadings in ours namespaces. But you don't want write `rmsn::pv::v1::operator<<(std::cout, {1, 2, 3})`, right? That's when ADL appears: compiler sees `pretty_view` object from `rmsn::pv::v1` namespace and at first it looks at the current translation unit, after – at namespace `pretty_view` came from (which is `rmsn::pv::v1` where my `operator<<` overloading is placed).
+
+**Important!** Do not use temporary objects in wrapper `pretty_view`, unless you instantly printing them. Lifetime of temporary objects ends at the end of the line they were declared!
+
+Undefined behaviour:
+```cpp
+rmsh::pretty_view pv{std::vector<int>{1, 2, 3, 4, 5}};
+std::cout << pv;
+```
+Still safe but very close to death:
+```cpp
+std::cout << rmsh::pretty_view{std::vector<int>{1, 2, 3, 4, 5}};
+// because lifetime of temporary vector ends after operator<< performing
+// it's still safe to print it
+```
+For you, it's better to use `pretty_view` wrapper with lvalue objects (objects that have name identifier and place in memory), not rvalue (temporary).
 
 #### 4.2. 2nd way
 Luckily, this way fixed that annoying linkage to wrapper structure aka proxy `pretty_view`. I just figured out that ADL not necessary in this situation, you can just write
@@ -127,17 +142,17 @@ std::cout << mega_map;
 ```
 
 ### 6. Support for non-STL data structures
-The best thing is you can use your own collections or whatever you have coded, it just must satisfy the concept `is_collection_or_tuple_and_not_string_like` from `rmsn::pv::[VERSION]::detail` (all `pretty_view` have same concept realization, luckily).
+The best thing is you can use your own collections or whatever you have coded, it just must satisfy the concept `is_collection_or_tuple_and_not_string_like` from `rmsn::dtl` (all `pretty_view` have same concept realization, luckily).
 
 Good news is you don't need to care about scary things below unless you're going to write your own good-coded collection or data container.
 
 There are simplified representations:
 ```c++
-template<typename U>
+template<typename T>
 concept is_collection_or_tuple_and_not_string_like =
-        (is_collection<U> // is given type a collection or array
-        || is_tuple_like<U>) // or is it a tuple or tuple-like (pair, for example)
-        && !is_string_like<U>; // and is it not a string-like (string, string_view, raw char array etc.)
+        (is_collection<T> // is given type a collection or array
+        || is_tuple_like<T>) // or is it a tuple or tuple-like (pair, for example)
+        && !is_string_like<T>; // and is it not a string-like (string, string_view, raw char array etc.)
 ```
 If your something is satisfying it – congratulations, you can use your invention with `pretty_view` with much chill.
 
