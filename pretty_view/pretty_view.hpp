@@ -8,16 +8,68 @@
 #include <tuple>
 #include <ostream>
 
+#ifdef _MSVC_LANG
+#define CPP_VERSION _MSVC_LANG
+#else
+#define CPP_VERSION __cplusplus
+#endif
+
+#if CPP_VERSION >= 202002L
+// C++20+
+#elif CPP_VERSION >= 201103L
+// C++11+
+#endif
+
 namespace rmsn::pv::detail { // inner namespace for helping tools
+#if CPP_VERSION >= 201103L && CPP_VERSION < 202002L
+    template<typename T>
+    struct remove_cvref {
+        using type = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+    };
+// C++20+
+#else
+    using std::remove_cvref;
+#endif
+
     // get pure, clear type (without const, volatile qualifiers, reference)
     template<typename T>
-    using base_t = std::remove_cvref_t<T>;
+    using base_t = typename remove_cvref<T>::type;
 
+#if CPP_VERSION >= 202002L
     // literally determines if given type is char-like (helping concept for is_string_like)
     template<typename T, typename BaseT = base_t<T>>
     concept is_char_like = std::same_as<BaseT, char> || std::same_as<BaseT, wchar_t> ||
         std::same_as<BaseT, char8_t> || std::same_as<BaseT, char16_t> || std::same_as<BaseT, char32_t>;
+#elif CPP_VERSION >= 201103L
+    // literally determines if given type is char-like (helping concept for is_string_like)
+    template<typename T, typename BaseT = base_t<T>>
+    static constexpr bool is_char_like = std::is_same<BaseT, char>::value || std::is_same<BaseT, wchar_t>::value ||
+#ifdef ___cpp_char8_t
+        std::same_as<BaseT, char8_t>::value ||
+#endif
+        std::is_same<BaseT, char16_t>::value || std::is_same<BaseT, char32_t>::value;
+#endif
 
+#if CPP_VERSION < 201703L
+    template<typename...>
+    struct make_void {
+        typedef void type;
+    };
+
+    template<typename... Ts>
+    using void_t = typename make_void<Ts...>::type;
+#elif CPP_VERSION < 202002L
+    using std::void_t;
+#endif
+
+#if CPP_VERSION < 201703L
+    template<bool Condition>
+    using bool_constant = std::integral_constant<bool, Condition>;
+#else
+    using std::bool_constant;
+#endif
+
+#if CPP_VERSION >= 202002L
     // is the type is a string-like (need to ensure that we won't write a string-like type char by char like it's array of chars)
     // also used to prevent ambiguous call to standard `operator<<` overloadings in `std` for `const CharT *`-like types
     template<typename T, typename BaseT = base_t<T>>
@@ -26,30 +78,91 @@ namespace rmsn::pv::detail { // inner namespace for helping tools
         is_char_like<typename BaseT::value_type> && // or is it (any char)-based std::basic_string or std::basic_string_view
         (std::same_as<BaseT, std::basic_string<typename BaseT::value_type>> ||
         std::same_as<BaseT, std::basic_string_view<typename BaseT::value_type>>);
+#elif CPP_VERSION >= 201103L
+    template<typename T>
+    struct char_array_or_pointer : bool_constant<(std::is_array<T>::value || std::is_pointer<T>::value) &&
+        is_char_like<typename std::remove_pointer<typename std::decay<T>::type>::type>> {};
+
+    template<typename T, typename = void>
+    struct char_string_or_string_view : std::false_type {};
+
+    template<typename T>
+    struct char_string_or_string_view<T, void_t<typename T::value_type>> : bool_constant<
+            is_char_like<typename T::value_type> && // or is it (any char)-based std::basic_string or std::basic_string_view
+            (std::is_same<T, std::basic_string<typename T::value_type>>::value
+#if CPP_VERSION >= 201703L
+            || std::is_same<T, std::basic_string_view<typename T::value_type>>::value
+#endif
+            )> {};
+
+    // is the type is a string-like (need to ensure that we won'baseT write a string-like type char by char like it's array of chars)
+    // also used to prevent ambiguous call to standard `operator<<` overloadings in `std` for `const CharT *`-like types
+    template<typename T, typename BaseT = base_t<T>>
+    static constexpr bool is_string_like = char_array_or_pointer<BaseT>::value || char_string_or_string_view<BaseT>::value;
+#endif
+
+#if CPP_VERSION >= 202002L
+    // is the type is a collection-like (has iterators)
+    template<typename T, typename BaseT = base_t<T>>
+    concept is_collection = requires (const BaseT& baseT) {
+        std::begin(baseT); // unified way to get an iterator (instead of simple baseT.begin() that, for example, couldn'baseT be
+        std::end(baseT); // invoked on raw arrays
+    }; // cuz std::string, std::string_view, char *, const char * also can get iterators
+#elif CPP_VERSION >= 201103L
+    template<typename T, typename = void>
+    struct is_collection_s : std::false_type {};
+
+    // unified way to get an iterator (instead of simple baseT.begin() that, for example, couldn'baseT be invoked on raw arrays
+    // cuz std::string, std::string_view, char *, const char * also can get iterators
+    template<typename T>
+    struct is_collection_s<T, void_t<decltype(std::begin(std::declval<T&>())), decltype(std::end(std::declval<T&>()))>> : std::true_type {};
 
     // is the type is a collection-like (has iterators)
     template<typename T, typename BaseT = base_t<T>>
-    concept is_collection = requires {
-        std::begin(std::declval<BaseT&>()); // unified way to get an iterator (instead of simple t.begin() that, for example, couldn't be
-        std::end(std::declval<BaseT&>()); // invoked on raw arrays
-    }; // cuz std::string, std::string_view, char *, const char * also can get iterators
+    static constexpr bool is_collection = is_collection_s<BaseT>::value;
+#endif
 
+#if CPP_VERSION >= 202002L
     // is the type is a tuple-like (can invoke std::get<N>(), std::tuple_size<T>)
     template<typename T, typename BaseT = base_t<T>>
     concept is_tuple_like = requires {
         std::tuple_size<BaseT>::value;
     };
+#elif CPP_VERSION >= 201103L
+    template<typename T, typename = void>
+    struct is_tuple_like_s : std::false_type {};
 
+    template<typename T>
+    struct is_tuple_like_s<T, void_t<decltype(std::tuple_size<T>::value)>> : std::true_type {};
+
+    // is the type is a tuple-like (can invoke std::get<N>(), std::tuple_size<T>)
+    template<typename T, typename BaseT = base_t<T>>
+    static constexpr bool is_tuple_like = is_tuple_like_s<BaseT>::value;
+#endif
+
+
+#if CPP_VERSION >= 202002L
     // composite concept to not write chain of concepts every time
     template<typename T, typename BaseT = base_t<T>>
-    concept is_collection_or_tuple_and_not_string_like = (detail::is_collection<BaseT> || detail::is_tuple_like<BaseT>) &&
-        !detail::is_string_like<BaseT>;
-
-    // TODO traits like concepts for [C++03; C++20) standards support
+    concept is_collection_or_tuple_and_not_string_like = (is_collection<BaseT> || is_tuple_like<BaseT>) &&
+        !is_string_like<BaseT>;
+#elif CPP_VERSION >= 201103L
+    // composite concept to not write chain of concepts every time
+    template<typename T, typename BaseT = base_t<T>>
+    static constexpr bool is_collection_or_tuple_and_not_string_like = (is_collection<BaseT> || is_tuple_like<BaseT>) &&
+        !is_string_like<BaseT>;
+#endif
 }
 
 namespace rmsn::pv::format { // global variables used in pretty_view.operator<<
-    inline constinit const char *collection_prefix = "[", *collection_postfix = "]", *collection_delimiter = ", ",
+#if CPP_VERSION >= 202002L
+    inline constinit const char *
+#elif CPP_VERSION >= 201703L
+    inline const char *
+#elif CPP_VERSION >= 201103L
+    const char *
+#endif
+    collection_prefix = "[", *collection_postfix = "]", *collection_delimiter = ", ",
         *tuple_prefix = "{", *tuple_postfix = "}", *tuple_delimiter = ", ";
 }
 
@@ -63,7 +176,11 @@ namespace rmsn::pv {
 */
 
     // declaration of the struct (to be visible in the following operator<<)
+#if CPP_VERSION >= 202002L
     template<detail::is_collection_or_tuple_and_not_string_like T>
+#elif CPP_VERSION >= 201103L
+    template<typename T, typename Enable = typename std::enable_if<detail::is_collection_or_tuple_and_not_string_like<T>, void>::type>
+#endif
     class pretty_view;
 
     // declaration of the operator<<
@@ -72,12 +189,16 @@ namespace rmsn::pv {
 
     // simple proxy class for collections and tuples (to prevent ADL from breaking overloadings or messing with some shit in std)
     // TODO proxy contains things from `format` => `operator<<` overloading becomes thread-safe
+#if CPP_VERSION >= 202002L
     template<detail::is_collection_or_tuple_and_not_string_like T>
+#elif CPP_VERSION >= 201103L
+    template<typename T, typename Enable>
+#endif
     class pretty_view {
     public:
         explicit pretty_view(const T& t) noexcept;
 
-        pretty_view(const pretty_view<T>& other) noexcept;
+        pretty_view(const pretty_view<T>& other) = delete;
 
         pretty_view(pretty_view<T>&& other) = delete;
 
@@ -89,12 +210,16 @@ namespace rmsn::pv {
         template<typename U>
         friend inline std::ostream& operator<<(std::ostream& os, const pretty_view<U>& pv);
 
+#if CPP_VERSION >= 202002L
     private:
+#endif
         const detail::base_t<T>& t_;
     };
 
+#if CPP_VERSION >= 201703L
     template<typename T>
     pretty_view(T) -> pretty_view<T>;
+#endif
 
 
 /**
@@ -106,7 +231,11 @@ namespace rmsn::pv {
 */
 
     // declaration of the `operator<<`
+#if CPP_VERSION >= 202002L
     template<detail::is_collection_or_tuple_and_not_string_like T>
+#elif CPP_VERSION >= 201103L
+    template<typename T, typename Enabled = typename std::enable_if<detail::is_collection_or_tuple_and_not_string_like<T>>::type>
+#endif
     inline std::ostream& operator<<(std::ostream& os, const T& t);
 }
 
