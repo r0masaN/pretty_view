@@ -1,4 +1,4 @@
-namespace rmsn::pv {
+namespace rmsn {
 /**
  * The 1st way: <br>
  * - no "using rmsn::pv" needed; <br>
@@ -121,7 +121,6 @@ namespace rmsn::pv {
     }
 #endif
 
-
     // realization of the operator<<
     template<typename U>
     inline std::ostream& operator<<(std::ostream& os, const pretty_view<U>& pv) {
@@ -135,7 +134,7 @@ namespace rmsn::pv {
             for (auto it = begin; it != end; ++it) { // iterating on collection
                 if (it != begin) os << format::collection_delimiter;
                 // if collection's element is collection or tuple himself
-                if constexpr (detail::is_collection_or_tuple_and_not_string_like<elem_t>) os << pretty_view(*it); // wrap in proxy => recursion
+                if constexpr (detail::is_collection_or_tuple_and_not_string_like<elem_t>) os << pretty_view{*it}; // wrap in proxy => recursion
                 else os << *it; // else it's primitive or class/struct that isn't baseT collection/tuple
             }
 
@@ -143,7 +142,6 @@ namespace rmsn::pv {
 
         } else if constexpr (detail::is_tuple_like<U>) { // if proxy contains tuple
             os << format::tuple_prefix;
-
 
 #if CPP_VERSION >= 202002L
             // fun :) it's anonymous lambda that's unwrapping index sequence made from tuple
@@ -153,7 +151,7 @@ namespace rmsn::pv {
                         I == 0 ? void() : void(os << format::tuple_delimiter),
                         [&os, &pv]() { // another anonymous lambda that does the same logic that 52-57 lines
                             const auto& elem = std::get<I>(pv.t_); // std::get<I>(pv.t_) gets an I-st element from tuple pv.baseT
-                            if constexpr (detail::is_collection_or_tuple_and_not_string_like<detail::base_t<decltype(elem)>>) os << pretty_view(elem);
+                            if constexpr (detail::is_collection_or_tuple_and_not_string_like<detail::base_t<decltype(elem)>>) os << pretty_view{elem};
                             else os << elem;
                         }() // immediately invoke this lambda
                     ),
@@ -162,7 +160,7 @@ namespace rmsn::pv {
             }(std::make_index_sequence<std::tuple_size<detail::base_t<U>>::value>{}); // here comes an index sequence + immediately invocation
 #elif CPP_VERSION >= 201703L
             // here comes an index sequence
-            print_tuple_pretty_view(os, pv, std::make_index_sequence<std::tuple_size_v<detail::base_t<U>>>{});
+            print_tuple_pretty_view(os, pv, std::make_index_sequence<std::tuple_size<detail::base_t<U>>::value>{});
 #endif
 
             os << format::tuple_postfix;
@@ -244,11 +242,11 @@ namespace rmsn::pv {
     template<typename T, std::size_t... I>
     static inline void print_tuple(std::ostream& os, const T& t, const std::index_sequence<I...>&) {
         ( // 24-27 lines will be applied for each unwrapped element from tuple
-                ( // if that's the first element of tuple, don't write delimiter (before him)
-                        I == 0 ? void() : void(os << format::tuple_delimiter),
-                                os << std::get<I>(t) // std::get<I>(baseT) gets an I-st element from tuple baseT
-                ),
-                ... // unwrapping variadic pack
+            ( // if that's the first element of tuple, don't write delimiter (before him)
+                I == 0 ? void() : void(os << format::tuple_delimiter),
+                os << std::get<I>(t) // std::get<I>(baseT) gets an I-st element from tuple baseT
+            ),
+            ... // unwrapping variadic pack
         );
     }
 #endif
@@ -288,7 +286,7 @@ namespace rmsn::pv {
             }(std::make_index_sequence<std::tuple_size_v<detail::base_t<T>>>{}); // here comes an index sequence + immediately invocation
 #elif CPP_VERSION >= 201703L
             // here comes an index sequence
-            print_tuple(os, t, std::make_index_sequence<std::tuple_size_v<detail::base_t<T>>>{});
+            print_tuple(os, t, std::make_index_sequence<std::tuple_size<detail::base_t<T>>::value>{});
 #endif
 
             os << format::tuple_postfix;

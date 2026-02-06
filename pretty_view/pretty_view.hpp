@@ -14,13 +14,7 @@
 #define CPP_VERSION __cplusplus
 #endif
 
-#if CPP_VERSION >= 202002L
-// C++20+
-#elif CPP_VERSION >= 201103L
-// C++11+
-#endif
-
-namespace rmsn::pv::detail { // inner namespace for helping tools
+namespace rmsn::detail { // inner namespace for helping tools
 #if CPP_VERSION >= 201103L && CPP_VERSION < 202002L
     template<typename T>
     struct remove_cvref {
@@ -58,14 +52,11 @@ namespace rmsn::pv::detail { // inner namespace for helping tools
 
     template<typename... Ts>
     using void_t = typename make_void<Ts...>::type;
-#elif CPP_VERSION < 202002L
-    using std::void_t;
-#endif
 
-#if CPP_VERSION < 201703L
     template<bool Condition>
     using bool_constant = std::integral_constant<bool, Condition>;
-#else
+#elif CPP_VERSION < 202002L
+    using std::void_t;
     using std::bool_constant;
 #endif
 
@@ -80,25 +71,25 @@ namespace rmsn::pv::detail { // inner namespace for helping tools
         std::same_as<BaseT, std::basic_string_view<typename BaseT::value_type>>);
 #elif CPP_VERSION >= 201103L
     template<typename T>
-    struct char_array_or_pointer : bool_constant<(std::is_array<T>::value || std::is_pointer<T>::value) &&
+    struct char_array_or_pointer_s : bool_constant<(std::is_array<T>::value || std::is_pointer<T>::value) &&
         is_char_like<typename std::remove_pointer<typename std::decay<T>::type>::type>> {};
 
     template<typename T, typename = void>
-    struct char_string_or_string_view : std::false_type {};
+    struct char_string_or_string_view_s : std::false_type {};
 
     template<typename T>
-    struct char_string_or_string_view<T, void_t<typename T::value_type>> : bool_constant<
+    struct char_string_or_string_view_s<T, void_t<typename T::value_type>> : bool_constant<
             is_char_like<typename T::value_type> && // or is it (any char)-based std::basic_string or std::basic_string_view
             (std::is_same<T, std::basic_string<typename T::value_type>>::value
 #if CPP_VERSION >= 201703L
             || std::is_same<T, std::basic_string_view<typename T::value_type>>::value
 #endif
-            )> {};
+        )> {};
 
     // is the type is a string-like (need to ensure that we won'baseT write a string-like type char by char like it's array of chars)
     // also used to prevent ambiguous call to standard `operator<<` overloadings in `std` for `const CharT *`-like types
     template<typename T, typename BaseT = base_t<T>>
-    static constexpr bool is_string_like = char_array_or_pointer<BaseT>::value || char_string_or_string_view<BaseT>::value;
+    static constexpr bool is_string_like = char_array_or_pointer_s<BaseT>::value || char_string_or_string_view_s<BaseT>::value;
 #endif
 
 #if CPP_VERSION >= 202002L
@@ -154,7 +145,7 @@ namespace rmsn::pv::detail { // inner namespace for helping tools
 #endif
 }
 
-namespace rmsn::pv::format { // global variables used in pretty_view.operator<<
+namespace rmsn::format { // global variables used in pretty_view.operator<<
 #if CPP_VERSION >= 202002L
     inline constinit const char *
 #elif CPP_VERSION >= 201703L
@@ -166,7 +157,7 @@ namespace rmsn::pv::format { // global variables used in pretty_view.operator<<
         *tuple_prefix = "{", *tuple_postfix = "}", *tuple_delimiter = ", ";
 }
 
-namespace rmsn::pv {
+namespace rmsn {
 /**
  * The 1st way: <br>
  * - no "using rmsn::pv" needed; <br>
@@ -194,6 +185,8 @@ namespace rmsn::pv {
 #elif CPP_VERSION >= 201103L
     template<typename T, typename Enable>
 #endif
+    //TODO ситуация, когда в конструктор передаётся rvalue (UB)
+    // можно использовать std::conditional_t<!IsTemporary, const T&, const T>
     class pretty_view {
     public:
         explicit pretty_view(const T& t) noexcept;
@@ -234,7 +227,7 @@ namespace rmsn::pv {
 #if CPP_VERSION >= 202002L
     template<detail::is_collection_or_tuple_and_not_string_like T>
 #elif CPP_VERSION >= 201103L
-    template<typename T, typename Enabled = typename std::enable_if<detail::is_collection_or_tuple_and_not_string_like<T>>::type>
+    template<typename T, typename Enabled = typename std::enable_if<detail::is_collection_or_tuple_and_not_string_like<T>, void>::type>
 #endif
     inline std::ostream& operator<<(std::ostream& os, const T& t);
 }

@@ -29,24 +29,24 @@ import pretty_view;
 Module's file `pretty_view.ixx` is located at the same directory "pretty_view" (with `pretty_view.hpp` and `pretty_view.tcc`, obviously).
 
 ### 2. Namespaces
-If you don't want to write `rmsn::pv::` every time:
+If you don't want to write `rmsn::` every time:
 ```c++
-using namespace rmsn::pv;
+using namespace rmsn;
 ```
 There are 3 namespaces, by the way:
-- `rmsn::pv`: core `pretty_view` class and overloaded `operator<<` function,
-- `rmsn::pv::format`: prefixes, delimiters and postfixes for formatting output,
-- `rmsn::pv::detail`: hidden technical helping tools like concepts.
+- `rmsn`: core `pretty_view` class and overloaded `operator<<` function,
+- `rmsn::format`: prefixes, delimiters and postfixes for formatting output,
+- `rmsn::detail`: hidden technical helping tools like concepts.
 
 ### 3. Formatting output
 If you want to customize prefixes, delimiters and postfixes, use:
 ```c++
-rmsn::pv::format::collection_prefix = "[";
-rmsn::pv::format::collection_delimiter = ", ";
-rmsn::pv::format::collection_postfix = "]";
-rmsn::pv::format::tuple_prefix = "{";
-rmsn::pv::format::tuple_delimiter = ", ";
-rmsn::pv::format::tuple_postfix = "}";
+rmsn::format::collection_prefix = "[";
+rmsn::format::collection_delimiter = ", ";
+rmsn::format::collection_postfix = "]";
+rmsn::format::tuple_prefix = "{";
+rmsn::format::tuple_delimiter = ", ";
+rmsn::format::tuple_postfix = "}";
 ```
 Default values are demonstrated above. You can set these variables to whatever you want. It's just simple global state for any `pretty_view` object (will reinvent it in the future maybe), not (!) thread safe for now.
 
@@ -77,9 +77,9 @@ In simple words: adding new `operator<<` overloading in `std` namespace is unsaf
 #### 4.2. 2nd way
 Luckily, this way fixed that annoying linkage to wrapper structure aka proxy `pretty_view`. I just figured out that ADL not necessary in this situation, you can just write
 ```c++
-#include "pretty_view_v1/pretty_view"
+#include "pretty_view/pretty_view"
 
-using namespace rmsn::pv;
+using namespace rmsn;
 ```
 and with no troubles use my custom `operator<<` overloading because it was written in such way that compiler will find it and 100% add to Candidate Function Set without any ambiguous calls to standard `operator<<` overloadings from `std` namespace. So, no worries about it or whatever.
 
@@ -111,7 +111,7 @@ std::cout << rmsn::pretty_view{mega_map};
 #### 2nd version
 As long as I got rid of proxy class, no needed to wrap data structure into something. Just pass it into `operator<<`:
 ```c++
-using namespace rmsn::pv;
+using namespace rmsn;
 
 std::cout << v{1, 2, 3, 4, 5} << std::endl;
 
@@ -133,11 +133,11 @@ Good news is you don't need to care about scary things below unless you're going
 
 There are simplified representations:
 ```c++
-template<typename T>
+template<typename U>
 concept is_collection_or_tuple_and_not_string_like =
-        (is_collection<T> // is given type a collection or array
-        || is_tuple_like<T>) // or is it a tuple or tuple-like (pair, for example)
-        && !is_string_like<T>; // and is it not a string-like (string, string_view, raw char array etc.)
+        (is_collection<U> // is given type a collection or array
+        || is_tuple_like<U>) // or is it a tuple or tuple-like (pair, for example)
+        && !is_string_like<U>; // and is it not a string-like (string, string_view, raw char array etc.)
 ```
 If your something is satisfying it – congratulations, you can use your invention with `pretty_view` with much chill.
 

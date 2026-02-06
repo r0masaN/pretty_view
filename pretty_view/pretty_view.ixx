@@ -7,7 +7,7 @@ import <string_view>;
 import <tuple>;
 import <ostream>;
 
-namespace rmsn::pv::detail { // inner namespace for helping tools
+namespace rmsn::detail { // inner namespace for helping tools
     // get pure, clear type (without const, volatile qualifiers, reference)
     template<typename T>
     using base_t = std::remove_cvref_t<T>;
@@ -45,12 +45,12 @@ namespace rmsn::pv::detail { // inner namespace for helping tools
         !detail::is_string_like<BaseT>;
 }
 
-export namespace rmsn::pv::format { // global variables used in pretty_view.operator<<
+export namespace rmsn::format { // global variables used in pretty_view.operator<<
     inline constinit const char *collection_prefix = "[", *collection_postfix = "]", *collection_delimiter = ", ",
         *tuple_prefix = "{", *tuple_postfix = "}", *tuple_delimiter = ", ";
 }
 
-export namespace rmsn::pv {
+export namespace rmsn {
 /**
  * The 1st way: <br>
  * - no "using rmsn::pv" needed; <br>
