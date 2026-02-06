@@ -16,3 +16,4 @@ Makefile
 *.dll
 
 main.cpp
+*.txt

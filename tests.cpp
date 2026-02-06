@@ -20,14 +20,14 @@
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 
-using namespace rmsn::pv;
+using namespace rmsn;
 
 template<typename T>
 void test(const char *const name, const T& value) {
     std::cout << std::string(10, '-') << "\n";
     std::cout << "TEST " << name << "\n";
     std::cout << "1st way:\n" << pretty_view{value} << "\n";
-    std::cout << "2st way:\n" <<  value << "\n";
+    std::cout << "2st way:\n" << value << "\n";
     std::cout << std::string(10, '-') << "\n";
 }
 
@@ -80,14 +80,14 @@ int main() {
     test("int arr[]", arr);
 
     test("vector<int>", std::vector<int>{1, 2, 3});
-    test("list<int>", std::list{1, 2, 3});
+    test("list<int>", std::list<int>{1, 2, 3});
     test("forward_list<int>", std::forward_list<int>{1, 2, 3});
-    test("deque<int>", std::deque{4, 5, 6});
+    test("deque<int>", std::deque<int>{4, 5, 6});
     test("array<int,3>", std::array<int, 3>{7, 8, 9});
     test("valarray<int>", std::valarray<int>{10, 11, 12});
 
-    test("set<int>", std::set{1, 3, 2});
-    test("unordered_set<int>", std::unordered_set{4, 5, 6});
+    test("set<int>", std::set<int>{1, 3, 2});
+    test("unordered_set<int>", std::unordered_set<int>{4, 5, 6});
 
     test("map<int,string>", std::map<int, std::string>{{1, "hello"}, {2, "world"}});
     test("unordered_map<string,int>", std::unordered_map<std::string, int>{{"x", 1}, {"y", 2}});
@@ -96,12 +96,12 @@ int main() {
     test("span<char>", std::span<const char>("abc", 3));
 
     test("tuple<int,double,const char*>", std::make_tuple(1, 2.5, "hi"));
-    test("pair<int,string>", std::pair{10, "xx"});
+    test("pair<int,string>", std::pair<int, std::string>{10, "xx"});
 
-    auto nested_tup = std::tuple{
+    auto nested_tup = std::tuple<int, std::tuple<int, int>, std::pair<int, int>>{
             10,
             std::make_tuple(20, 30),
-            std::pair{40, 50}
+            std::pair<int, int>{40, 50}
     };
     test("nested_tuple", nested_tup);
 
@@ -118,7 +118,7 @@ int main() {
     test("vector<vector<tuple>>", crazy);
 
     auto mega = std::make_tuple(
-            std::vector{1, 2, 3},
+            std::vector<int>{1, 2, 3},
             std::set<std::string>{"x", "y"},
             std::tuple<std::vector<int>, std::vector<std::vector<int>>>{
                     {5, 6},
@@ -145,8 +145,8 @@ int main() {
     test("empty vector<int>", std::vector<int>{});
     test("empty list<string>", std::list<std::string>{});
     test("empty set<int>", std::set<int>{});
-    test("empty tuple", std::tuple{});
-    test("vector<tuple{}>", std::vector<std::tuple<>>{std::tuple{}, std::tuple{}});
+    test("empty tuple", std::tuple<>{});
+    test("vector<tuple{}>", std::vector<std::tuple<>>{std::tuple<>{}, std::tuple<>{}});
 
     int raw[4] = {1, 2, 3, 4};
     std::span s(raw);

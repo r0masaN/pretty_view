@@ -29,24 +29,24 @@ import pretty_view;
 Module's file `pretty_view.ixx` is located at the same directory "pretty_view" (with `pretty_view.hpp` and `pretty_view.tcc`, obviously).
 
 ### 2. Namespaces
-If you don't want to write `rmsn::pv::` every time:
+If you don't want to write `rmsn::` every time:
 ```c++
-using namespace rmsn::pv;
+using namespace rmsn;
 ```
 There are 3 namespaces, by the way:
-- `rmsn::pv`: core `pretty_view` class and overloaded `operator<<` function,
-- `rmsn::pv::format`: prefixes, delimiters and postfixes for formatting output,
-- `rmsn::pv::detail`: hidden technical helping tools like concepts.
+- `rmsn`: core `pretty_view` class and overloaded `operator<<` function,
+- `rmsn::fmt`: prefixes, delimiters and postfixes for formatting output,
+- `rmsn::dtl`: hidden technical helping tools like concepts.
 
 ### 3. Formatting output
 If you want to customize prefixes, delimiters and postfixes, use:
 ```c++
-rmsn::pv::format::collection_prefix = "[";
-rmsn::pv::format::collection_delimiter = ", ";
-rmsn::pv::format::collection_postfix = "]";
-rmsn::pv::format::tuple_prefix = "{";
-rmsn::pv::format::tuple_delimiter = ", ";
-rmsn::pv::format::tuple_postfix = "}";
+rmsn::fmt::collection_prefix = "[";
+rmsn::fmt::collection_delimiter = ", ";
+rmsn::fmt::collection_postfix = "]";
+rmsn::fmt::tuple_prefix = "{";
+rmsn::fmt::tuple_delimiter = ", ";
+rmsn::fmt::tuple_postfix = "}";
 ```
 Default values are demonstrated above. You can set these variables to whatever you want. It's just simple global state for any `pretty_view` object (will reinvent it in the future maybe), not (!) thread safe for now.
 
@@ -74,12 +74,27 @@ Wrapping is needed due to ADL mechanism in C++ which helps compiler to find corr
 
 In simple words: adding new `operator<<` overloading in `std` namespace is unsafe and unreliable so we can have our own overloadings in ours namespaces. But you don't want write `rmsn::pv::v1::operator<<(std::cout, {1, 2, 3})`, right? That's when ADL appears: compiler sees `pretty_view` object from `rmsn::pv::v1` namespace and at first it looks at the current translation unit, after – at namespace `pretty_view` came from (which is `rmsn::pv::v1` where my `operator<<` overloading is placed).
 
+**Important!** Do not use temporary objects in wrapper `pretty_view`, unless you instantly printing them. Lifetime of temporary objects ends at the end of the line they were declared!
+
+Undefined behaviour:
+```cpp
+rmsh::pretty_view pv{std::vector<int>{1, 2, 3, 4, 5}};
+std::cout << pv;
+```
+Still safe but very close to death:
+```cpp
+std::cout << rmsh::pretty_view{std::vector<int>{1, 2, 3, 4, 5}};
+// because lifetime of temporary vector ends after operator<< performing
+// it's still safe to print it
+```
+For you, it's better to use `pretty_view` wrapper with lvalue objects (objects that have name identifier and place in memory), not rvalue (temporary).
+
 #### 4.2. 2nd way
 Luckily, this way fixed that annoying linkage to wrapper structure aka proxy `pretty_view`. I just figured out that ADL not necessary in this situation, you can just write
 ```c++
-#include "pretty_view_v1/pretty_view"
+#include "pretty_view/pretty_view"
 
-using namespace rmsn::pv;
+using namespace rmsn;
 ```
 and with no troubles use my custom `operator<<` overloading because it was written in such way that compiler will find it and 100% add to Candidate Function Set without any ambiguous calls to standard `operator<<` overloadings from `std` namespace. So, no worries about it or whatever.
 
@@ -111,7 +126,7 @@ std::cout << rmsn::pretty_view{mega_map};
 #### 2nd version
 As long as I got rid of proxy class, no needed to wrap data structure into something. Just pass it into `operator<<`:
 ```c++
-using namespace rmsn::pv;
+using namespace rmsn;
 
 std::cout << v{1, 2, 3, 4, 5} << std::endl;
 
@@ -127,7 +142,7 @@ std::cout << mega_map;
 ```
 
 ### 6. Support for non-STL data structures
-The best thing is you can use your own collections or whatever you have coded, it just must satisfy the concept `is_collection_or_tuple_and_not_string_like` from `rmsn::pv::[VERSION]::detail` (all `pretty_view` have same concept realization, luckily).
+The best thing is you can use your own collections or whatever you have coded, it just must satisfy the concept `is_collection_or_tuple_and_not_string_like` from `rmsn::dtl` (all `pretty_view` have same concept realization, luckily).
 
 Good news is you don't need to care about scary things below unless you're going to write your own good-coded collection or data container.
 
