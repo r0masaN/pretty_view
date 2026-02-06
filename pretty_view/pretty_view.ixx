@@ -76,11 +76,11 @@ export namespace rmsn::pv {
 
         pretty_view(const pretty_view<T>& other) = delete;
 
-        pretty_view(pretty_view<T>&& other) noexcept = delete;
+        pretty_view(pretty_view<T>&& other) = delete;
 
-        pretty_view& operator=(const pretty_view<T>& other) noexcept = delete;
+        pretty_view& operator=(const pretty_view<T>& other) = delete;
 
-        pretty_view& operator=(pretty_view<T>&& other) noexcept = delete;
+        pretty_view& operator=(pretty_view<T>&& other) = delete;
 
         // declaration that that operator<< is friend (has access to private fields)
         template<typename U>
