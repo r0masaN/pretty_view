@@ -30,7 +30,6 @@ namespace rmsn { // main namespace
         struct remove_cvref { // helper struct for removing reference & const-volatile qualification from the type T
             using type = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
         };
-// C++20+
 #else
         using std::remove_cvref; // helper struct for removing reference & const-volatile qualification from the type T
 #endif
