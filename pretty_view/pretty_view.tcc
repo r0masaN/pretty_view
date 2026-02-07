@@ -139,10 +139,10 @@ namespace rmsn {
 
 /**
  * The 1st way: <br>
- * - no "using rmsn::pv" needed; <br>
+ * - no "using namespace rmsn" needed; <br>
  * - pretty_view wrapper for collection/tuple needed; <br>
  * - operator<< overloading will be found due to ADL; <br>
- * - operator<< overloading will be selected due to concrete param type (pretty_view<...>).
+ * - operator<< overloading will be selected due to concrete param type (pretty_view<T>).
 */
 
 #if CPP_VERSION >= 202002L
@@ -221,10 +221,10 @@ namespace rmsn {
 
 /**
  * The 2nd way: <br>
- * - "using rmsn::pv" needed; <br>
+ * - "using namespace rmsn" needed; <br>
  * - no wrappers needed; <br>
  * - operator<< overloading will be found due to ADL; <br>
- * - operator<< overloading will be selected due to concept (is_collection_or_tuple_and_not_string_like<...>).
+ * - operator<< overloading will be selected due to concept (is_collection_or_tuple_and_not_string_like<T>).
 */
 
     // realization of the `operator<<`
