@@ -45,10 +45,12 @@ namespace rmsn::dtl { // inner namespace for helping tools
                                                          !dtl::is_string_like<BaseT>;
 }
 
+
 export namespace rmsn::fmt { // global variables used in pretty_view.operator<<
     inline constinit const char *collection_prefix = "[", *collection_postfix = "]", *collection_delimiter = ", ",
         *tuple_prefix = "{", *tuple_postfix = "}", *tuple_delimiter = ", ";
 }
+
 
 export namespace rmsn {
 /**
@@ -131,7 +133,6 @@ export namespace rmsn {
 
         return os;
     }
-
 
 /**
  * The 2nd way: <br>

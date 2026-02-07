@@ -1,61 +1,60 @@
 #ifndef PRETTY_VIEW_HPP
 #define PRETTY_VIEW_HPP
 
-#include <concepts>
-#include <type_traits>
-#include <string>
-#include <string_view>
-#include <tuple>
-#include <ostream>
 
+// the version of C++ standard that is currently in use
 #ifdef _MSVC_LANG
 #define CPP_VERSION _MSVC_LANG
 #else
 #define CPP_VERSION __cplusplus
 #endif
 
-namespace rmsn { // inner namespace for helping tools
-    namespace dtl {
+#if CPP_VERSION >= 202002L
+#include <concepts>
+#endif
+#include <type_traits>
+#include <utility>
+#include <string>
+#if CPP_VERSION >= 201703L
+#include <string_view>
+#endif
+#include <tuple>
+#include <ostream>
+
+
+namespace rmsn { // main namespace
+    namespace dtl { // hidden inner namespace for helping tools
 #if CPP_VERSION >= 201103L && CPP_VERSION < 202002L
         template<typename T>
-        struct remove_cvref {
+        struct remove_cvref { // helper struct for removing reference & const-volatile qualification from the type T
             using type = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
         };
 // C++20+
 #else
-        using std::remove_cvref;
+        using std::remove_cvref; // helper struct for removing reference & const-volatile qualification from the type T
 #endif
 
         // get pure, clear type (without const, volatile qualifiers, reference)
         template<typename T>
         using base_t = typename remove_cvref<T>::type;
 
-#if CPP_VERSION >= 202002L
         // literally determines if given type is char-like (helping concept for is_string_like)
         template<typename T, typename BaseT = base_t<T>>
+#if CPP_VERSION >= 202002L
         concept is_char_like = std::same_as<BaseT, char> || std::same_as<BaseT, wchar_t> ||
             std::same_as<BaseT, char8_t> || std::same_as<BaseT, char16_t> || std::same_as<BaseT, char32_t>;
 #elif CPP_VERSION >= 201402L
-        // literally determines if given type is char-like (helping concept for is_string_like)
-        template<typename T, typename BaseT = base_t<T>>
         static constexpr bool is_char_like = std::is_same<BaseT, char>::value || std::is_same<BaseT, wchar_t>::value ||
-#ifdef ___cpp_char8_t
-            std::same_as<BaseT, char8_t>::value ||
-#endif
             std::is_same<BaseT, char16_t>::value || std::is_same<BaseT, char32_t>::value;
 #elif CPP_VERSION >= 201103L
-        // literally determines if given type is char-like (helping concept for is_string_like)
-        template<typename T, typename BaseT = base_t<T>>
         struct is_char_like_s {
             static constexpr bool value = std::is_same<BaseT, char>::value || std::is_same<BaseT, wchar_t>::value ||
-#ifdef ___cpp_char8_t
-                std::same_as<BaseT, char8_t>::value ||
-#endif
                 std::is_same<BaseT, char16_t>::value || std::is_same<BaseT, char32_t>::value;
         };
 #endif
 
 #if CPP_VERSION < 201703L
+        // helper alias & struct for testing whether typenames Ts... could be instanced in template
         template<typename...>
         struct make_void {
             typedef void type;
@@ -80,18 +79,27 @@ namespace rmsn { // inner namespace for helping tools
             is_char_like<typename BaseT::value_type> && // or is it (any char)-based std::basic_string or std::basic_string_view
             (std::same_as<BaseT, std::basic_string<typename BaseT::value_type>> ||
             std::same_as<BaseT, std::basic_string_view<typename BaseT::value_type>>);
-#elif CPP_VERSION >= 201402L
+#elif CPP_VERSION >= 201103L
+        // helper structs that test if the given type T satisfies needed constraints
         template<typename T>
         struct char_array_or_pointer_s : bool_constant<(std::is_array<T>::value || std::is_pointer<T>::value) &&
+#if CPP_VERSION >= 201402L
             is_char_like<typename std::remove_pointer<typename std::decay<T>::type>::type>> {};
+#else
+            is_char_like_s<typename std::remove_pointer<typename std::decay<T>::type>::type>::value> {};
+#endif
 
         template<typename T, typename = void>
         struct char_string_or_string_view_s : std::false_type {};
 
         template<typename T>
         struct char_string_or_string_view_s<T, void_t<typename T::value_type>> : bool_constant<
-                is_char_like<typename T::value_type> && // or is it (any char)-based std::basic_string or std::basic_string_view
-                (std::is_same<T, std::basic_string<typename T::value_type>>::value
+#if CPP_VERSION >= 201402L
+                is_char_like<typename T::value_type> // or is it (any char)-based std::basic_string or std::basic_string_view
+#else
+                is_char_like_s<typename T::value_type>::value // or is it (any char)-based std::basic_string or std::basic_string_view
+#endif
+                && (std::is_same<T, std::basic_string<typename T::value_type>>::value
 #if CPP_VERSION >= 201703L
                 || std::is_same<T, std::basic_string_view<typename T::value_type>>::value
 #endif
@@ -100,21 +108,9 @@ namespace rmsn { // inner namespace for helping tools
         // is the type is a string-like (need to ensure that we won't write a string-like type char by char like it's array of chars)
         // also used to prevent ambiguous call to standard `operator<<` overloadings in `std` for `const CharT *`-like types
         template<typename T, typename BaseT = base_t<T>>
+#if CPP_VERSION >= 201402L
         static constexpr bool is_string_like = char_array_or_pointer_s<BaseT>::value || char_string_or_string_view_s<BaseT>::value;
-#elif CPP_VERSION >= 201103L
-        template<typename T>
-        struct char_array_or_pointer_s : bool_constant<(std::is_array<T>::value || std::is_pointer<T>::value) &&
-            is_char_like_s<typename std::remove_pointer<typename std::decay<T>::type>::type>::value> {};
-
-        template<typename T, typename = void>
-        struct char_string_or_string_view_s : std::false_type {};
-
-        template<typename T>
-        struct char_string_or_string_view_s<T, void_t<typename T::value_type>> : bool_constant<
-                is_char_like_s<typename T::value_type>::value && // or is it (any char)-based std::basic_string or std::basic_string_view
-                (std::is_same<T, std::basic_string<typename T::value_type>>::value)> {};
-
-        template<typename T, typename BaseT = base_t<T>>
+#else
         struct is_string_like_s {
             static constexpr bool value = char_array_or_pointer_s<BaseT>::value || char_string_or_string_view_s<BaseT>::value;
         };
@@ -129,6 +125,7 @@ namespace rmsn { // inner namespace for helping tools
             std::end(baseT); // invoked on raw arrays
         }; // cuz std::string, std::string_view, char *, const char * also can get iterators
 #elif CPP_VERSION >= 201103L
+        // helper structs that test if the given type T satisfies needed constraints
         template<typename T, typename = void>
         struct is_collection_s : std::false_type {};
 
@@ -151,6 +148,7 @@ namespace rmsn { // inner namespace for helping tools
             std::tuple_size<BaseT>::value;
         };
 #elif CPP_VERSION >= 201103L
+        // helper structs that test if the given type T satisfies needed constraints
         template<typename T, typename = void>
         struct is_tuple_like_s : std::false_type {};
 
@@ -164,20 +162,15 @@ namespace rmsn { // inner namespace for helping tools
 #endif
 #endif
 
-
-#if CPP_VERSION >= 202002L
         // composite concept to not write chain of concepts every time
         template<typename T, typename BaseT = base_t<T>>
+#if CPP_VERSION >= 202002L
         concept is_collection_or_tuple_and_not_string_like = (is_collection<BaseT> || is_tuple_like<BaseT>) &&
             !is_string_like<BaseT>;
 #elif CPP_VERSION >= 201402L
-        // composite concept to not write chain of concepts every time
-        template<typename T, typename BaseT = base_t<T>>
         static constexpr bool is_collection_or_tuple_and_not_string_like = (is_collection<BaseT> || is_tuple_like<BaseT>) &&
             !is_string_like<BaseT>;
 #elif CPP_VERSION >= 201103L
-        // composite concept to not write chain of concepts every time
-        template<typename T, typename BaseT = base_t<T>>
         struct is_collection_or_tuple_and_not_string_like_s {
             static constexpr bool value = (is_collection_s<BaseT>::value || is_tuple_like_s<BaseT>::value) &&
                 !is_string_like_s<BaseT>::value;
@@ -186,8 +179,9 @@ namespace rmsn { // inner namespace for helping tools
     }
 }
 
-namespace rmsn { // global variables used in pretty_view.operator<<
-    namespace fmt {
+
+namespace rmsn {
+    namespace fmt { // global variables used in pretty_view.operator<<
 #if CPP_VERSION >= 202002L
         inline constinit const char
 #elif CPP_VERSION >= 201703L
@@ -199,6 +193,7 @@ namespace rmsn { // global variables used in pretty_view.operator<<
             *tuple_prefix = "{", *tuple_postfix = "}", *tuple_delimiter = ", ";
     }
 }
+
 
 namespace rmsn {
 /**
@@ -223,7 +218,7 @@ namespace rmsn {
     template<typename U>
     inline std::ostream& operator<<(std::ostream& os, const pretty_view<U>& pv);
 
-    // simple proxy class for collections and tuples (to prevent ADL from breaking overloadings or messing with some shit in std)
+    // simple proxy class for collections and tuples (to prevent ADL from breaking overloadings or messing with smth in std)
     // TODO proxy contains things from `format` => `operator<<` overloading becomes thread-safe
 #if CPP_VERSION >= 202002L
     template<dtl::is_collection_or_tuple_and_not_string_like T>
@@ -248,9 +243,7 @@ namespace rmsn {
         template<typename U>
         friend inline std::ostream& operator<<(std::ostream& os, const pretty_view<U>& pv);
 
-#if CPP_VERSION >= 202002L
     private:
-#endif
         const dtl::base_t<T>& t_;
     };
 
@@ -258,7 +251,6 @@ namespace rmsn {
     template<typename T>
     pretty_view(T) -> pretty_view<T>;
 #endif
-
 
 /**
  * The 2nd way: <br>
@@ -281,4 +273,4 @@ namespace rmsn {
 
 #include "pretty_view.tcc" // realization of template methods/functions
 
-//#endif
+#endif

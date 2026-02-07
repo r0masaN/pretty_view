@@ -1,5 +1,6 @@
 namespace rmsn {
 #if CPP_VERSION >= 201103L && CPP_VERSION < 201402L
+    // helper alias & struct for making compile-time index sequence
     template<std::size_t... Is>
     struct index_sequence {};
 
@@ -19,39 +20,48 @@ namespace rmsn {
 #endif
 
 #if CPP_VERSION >= 201103L && CPP_VERSION < 201703L
-    template<typename T>
-    static void process_pretty_view(std::ostream& os, const T& t, std::false_type, std::false_type);
+    // declaration of overloads of function for processing concrete type of data container
 
+    // neither collection nor tuple-like
     template<typename T>
-    static void process_pretty_view(std::ostream& os, const T& t, std::false_type, std::true_type);
+    static inline void process_pretty_view(std::ostream& os, const T& t, std::false_type, std::false_type);
 
+    // not collection and tuple-like
     template<typename T>
-    static void process_pretty_view(std::ostream& os, const T& t, std::true_type , std::false_type);
+    static inline void process_pretty_view(std::ostream& os, const T& t, std::false_type, std::true_type);
 
+    // collection and not tuple-like
     template<typename T>
-    static void process_pretty_view(std::ostream& os, const T& t, std::true_type , std::true_type);
+    static inline void process_pretty_view(std::ostream& os, const T& t, std::true_type , std::false_type);
 
+    // collection and tuple-like (for example, std::array<T, std::size_t>)
+    template<typename T>
+    static inline void process_pretty_view(std::ostream& os, const T& t, std::true_type , std::true_type);
+
+    // helper function for printing tuple
     template<typename T, std::size_t... I>
-    static void print_tuple_pretty_view(std::ostream& os, const T& t, const index_sequence<I...>&);
+    static inline void print_tuple_pretty_view(std::ostream& os, const T& t, const index_sequence<I...>&);
 
 
+    // just print
     template<typename T>
-    static void process_pretty_view(std::ostream& os, const T& t, std::false_type, std::false_type) {
+    static inline void process_pretty_view(std::ostream& os, const T& t, std::false_type, std::false_type) {
         os << t;
     }
 
+    // process as tuple
     template<typename T>
-    static void process_pretty_view(std::ostream& os, const T& t, std::false_type, std::true_type) {
+    static inline void process_pretty_view(std::ostream& os, const T& t, std::false_type, std::true_type) {
         os << fmt::tuple_prefix;
 
-        // here comes an index sequence
         print_tuple_pretty_view(os, t, make_index_sequence<std::tuple_size<dtl::base_t<decltype(t)>>::value>{});
 
         os << fmt::tuple_postfix;
     }
 
+    // process as collection
     template<typename T>
-    static void process_pretty_view(std::ostream& os, const T& t, std::true_type, std::false_type) {
+    static inline void process_pretty_view(std::ostream& os, const T& t, std::true_type, std::false_type) {
         os << fmt::collection_prefix;
 
         const auto begin = std::begin(t), end = std::end(t);
@@ -59,6 +69,7 @@ namespace rmsn {
 
         for (auto it = begin; it != end; ++it) { // iterating on collection
             if (it != begin) os << fmt::collection_delimiter;
+            // recursive call to one of the overloadings
             process_pretty_view(os, *it,
 #if CPP_VERSION >= 201402L
                 dtl::bool_constant<dtl::is_collection<elem_t> && !dtl::is_string_like<elem_t>>{},
@@ -72,21 +83,27 @@ namespace rmsn {
         os << fmt::collection_postfix;
     }
 
+    // process as tuple, not like collection
+    // because tuple is unpacked in compile time when collection – in runtime
     template<typename T>
-    static void process_pretty_view(std::ostream& os, const T& t, std::true_type, std::true_type) {
-        process_pretty_view(os, t, dtl::bool_constant<true>{}, dtl::bool_constant<false>{});
+    static inline void process_pretty_view(std::ostream& os, const T& t, std::true_type, std::true_type) {
+        // recursive call to one of the overloadings
+        process_pretty_view(os, t, dtl::bool_constant<false>{}, dtl::bool_constant<true>{});
     }
 
     template<typename T, std::size_t... I>
-    static void print_tuple_pretty_view(std::ostream& os, const T& t, const index_sequence<I...>&) {
+    static inline void print_tuple_pretty_view(std::ostream& os, const T& t, const index_sequence<I...>&) {
+        // array trick to unpack parameters pack of indices (std::size_t... Is)
+        // 'volatile' used to prevent the compiler from removing the dummy for optimizing purposes
         const volatile int dummy[] = {
             0,
-            (
+            ( // 106-119 lines will be applied for each unwrapped element from tuple
                 ( // if that's the first element of tuple, don't write delimiter (before him)
                     I == 0 ? void() : void(os << fmt::tuple_delimiter),
                     [&os, &t]() { // another anonymous lambda that does the same logic that 52-57 lines
                         const auto& elem = std::get<I>(t); // std::get<I>(t.t_) gets an I-st element from tuple t.baseT
                         using elem_t = dtl::base_t<decltype(elem)>;
+                        // recursive call to one of the overloadings
                         process_pretty_view(os, elem,
 #if CPP_VERSION >= 201402L
                             dtl::bool_constant<dtl::is_collection<elem_t> && !dtl::is_string_like<elem_t>>{},
@@ -101,13 +118,12 @@ namespace rmsn {
             )...
         };
 
-        (void) dummy;
+        (void) dummy; // to prevent the compiler from removing the dummy for optimizing purposes
     }
-
 #elif CPP_VERSION >= 201703L && CPP_VERSION < 202002L
     template<typename T, std::size_t... I>
     static inline void print_tuple(std::ostream& os, const T& t, const std::index_sequence<I...>&) {
-        ( // 24-27 lines will be applied for each unwrapped element from tuple
+        ( // 112-113 lines will be applied for each unwrapped element from tuple
             ( // if that's the first element of tuple, don't write delimiter (before him)
                 I == 0 ? void() : void(os << fmt::tuple_delimiter),
                 os << std::get<I>(t) // std::get<I>(baseT) gets an I-st element from tuple baseT
@@ -116,7 +132,6 @@ namespace rmsn {
         );
     }
 #endif
-
 
 /**
  * The 1st way: <br>
@@ -132,23 +147,6 @@ namespace rmsn {
 #elif CPP_VERSION >= 201103L
     template<typename T, typename Enable>
     pretty_view<T, Enable>::pretty_view(const T& t) noexcept : t_(t) {}
-#endif
-
-#if CPP_VERSION >= 201703L && CPP_VERSION < 202002L
-    template<typename U, std::size_t... I>
-    static inline void print_tuple_pretty_view(std::ostream& os, const pretty_view<U>& pv, const std::index_sequence<I...>&) {
-        ( // 35-41 lines will be applied for each unwrapped element from tuple
-            ( // if that's the first element of tuple, don't write delimiter (before him)
-                I == 0 ? void() : void(os << fmt::tuple_delimiter),
-                    [&os, &pv]() { // another anonymous lambda that does the same logic that 52-57 lines
-                        const auto& elem = std::get<I>(pv.t_); // std::get<I>(pv.t_) gets an I-st element from tuple pv.baseT
-                        if constexpr (dtl::is_collection_or_tuple_and_not_string_like<dtl::base_t<decltype(elem)>>) os << pretty_view(elem);
-                        else os << elem;
-                    }() // immediately invoke this lambda
-            ),
-            ... // unwrapping variadic pack
-        );
-    }
 #endif
 
     // realization of the operator<<
@@ -176,7 +174,7 @@ namespace rmsn {
 #if CPP_VERSION >= 202002L
             // fun :) it's anonymous lambda that's unwrapping index sequence made from tuple
             [&os, &pv]<std::size_t... I>(const std::index_sequence<I...>&) {
-                ( // 35-41 lines will be applied for each unwrapped element from tuple
+                ( // 200-205 lines will be applied for each unwrapped element from tuple
                     ( // if that's the first element of tuple, don't write delimiter (before him)
                         I == 0 ? void() : void(os << fmt::tuple_delimiter),
                         [&os, &pv]() { // another anonymous lambda that does the same logic that 52-57 lines
@@ -196,6 +194,7 @@ namespace rmsn {
             os << fmt::tuple_postfix;
         } // there are no other if-else branches cuz we work here only with collections and tuples
 #elif CPP_VERSION >= 201103L
+        // initial call to one of the overloadings
         process_pretty_view(os, pv.t_,
 #if CPP_VERSION >= 201402L
             dtl::bool_constant<dtl::is_collection<U> && !dtl::is_string_like<U>>{},
@@ -208,7 +207,6 @@ namespace rmsn {
 
         return os;
     }
-
 
 /**
  * The 2nd way: <br>
@@ -243,7 +241,7 @@ namespace rmsn {
 #if CPP_VERSION >= 202002L
             // fun :) it's anonymous lambda that's unwrapping index sequence made from tuple
             [&os, &t]<std::size_t... I>(const std::index_sequence<I...>&) {
-                ( // 24-27 lines will be applied for each unwrapped element from tuple
+                ( // 250-251 lines will be applied for each unwrapped element from tuple
                     ( // if that's the first element of tuple, don't write delimiter (before him)
                         I == 0 ? void() : void(os << fmt::tuple_delimiter),
                         os << std::get<I>(t) // std::get<I>(baseT) gets an I-st element from tuple baseT
@@ -251,14 +249,14 @@ namespace rmsn {
                     ... // unwrapping variadic pack
                 );
             }(std::make_index_sequence<std::tuple_size_v<dtl::base_t<T>>>{}); // here comes an index sequence + immediately invocation
-#elif CPP_VERSION >= 201703L
-            // here comes an index sequence
+#else
             print_tuple(os, t, std::make_index_sequence<std::tuple_size<dtl::base_t<T>>::value>{});
 #endif
 
             os << fmt::tuple_postfix;
         } // there are no other if-else branches cuz we work here only with collections and tuples
 #elif CPP_VERSION >= 201103L
+        // initial call to one of the overloadings
         process_pretty_view(os, t,
 #if CPP_VERSION >= 201402L
             dtl::bool_constant<dtl::is_collection<T> && !dtl::is_string_like<T>>{},
