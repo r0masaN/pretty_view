@@ -181,12 +181,11 @@ std::cout << my_structs;
 ```
 
 ### 7. Ongoing updates
-- C++11, C++24 support;
 - thread-safe support;
 - 3rd way (ostream wrapper).
 
 ### 8. Requirements
-- C++17, C++20, C++23;
+- C++11, C++14, C++17, C++20, C++23, C++23+;
 - G++/GCC (confirmed), MSVC & Clang/LLVM (potentially);
 - `-fmodules` compilation flag for module usage;
 - Windows, Linux, MacOS.
