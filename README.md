@@ -1,14 +1,24 @@
 # pretty_view
-C++ library that adds custom overloading for 'std::ostream& operator<<(std::ostream&, T)' for collections (`std::vector`, `std::map`, etc.) and tuple-like types (`std::tuple`, `std::pair`, etc.).
+A header-only C++ library for pretty-printing collections (`std::vector`, `std::map`, etc.) and tuple-like types (`std::tuple`, `std::pair`, etc.), uncluding nested ones, with customizable formatting, via `operator<<`.
 
-###
+**Standards:** C++11-C++23+. **Compilers:** GCC/G++, MSVC, Clang/
+
+## TL;DR
 ```c++
+#include "pretty_view/pretty_view.hpp"
+
+using namespace rmsn;
+
 std::vector<int> vec{1, 2, 3, 4, 5};
 std::cout << vec;
 ```
+Output:
 ```text
 [1, 2, 3, 4, 5]
 ```
+
+## Why pretty_view?
+Unfortunately, C++ does'n provide a standard way to print containers and tuple-like types, expecially nested ones. This library solves that problem without modifying `std` namespace, while supporting nested structures, custom formatting, user-defined data types and containers.
 
 ## Usage of the `pretty_view`
 
@@ -20,7 +30,7 @@ About differences – down through paragraphs.
 ### 1. Including and files
 Include pretty_view's header:
 ```c++
-#include "pretty_view\pretty_view.hpp"
+#include "pretty_view/pretty_view.hpp"
 ```
 Or import module:
 ```c++
@@ -111,7 +121,7 @@ For you, it's better to use `pretty_view` wrapper with lvalue objects (objects t
 #### 4.2. 2nd way
 Luckily, this way fixes that annoying linkage to wrapper structure `pretty_view`. I just figured out that ADL not that really necessary in this situation, you can just write:
 ```c++
-#include "pretty_view\pretty_view.hpp"
+#include "pretty_view/pretty_view.hpp"
 
 using namespace rmsn;
 ```
@@ -142,7 +152,7 @@ std::cout << rmsn::pretty_view{complex_map};
 [{18, {10, [1, 2, 3], cat}}, {24, {48, [4, 51], dog}}]
 ```
 
-#### 2nd version
+#### 5.2. 2nd way
 As long as I got rid of proxy class, no needed to wrap data structure into something. Just pass it into `operator<<`:
 ```c++
 using namespace rmsn;
@@ -160,7 +170,7 @@ std::cout << complex_map;
 [{18, {10, [1, 2, 3], cat}}, {24, {48, [4, 51], dog}}]
 ```
 
-### 6. Support for non-STL data structures
+## Support for non-STL data structures
 The best thing is you can use your own collections/tuple-likes or data containers from other libraries, they just must satisfy the concept `is_collection_or_tuple_and_not_string_like` from `rmsn::dtl`.
 
 Good news is you don't need to care about scary things below unless you're going to write your own good-coded collection or tuple-like dta container.
@@ -199,10 +209,10 @@ std::cout << my_structs;
 [MyStruct{5, "Jeff"}, MyStruct{1, "Brent"}]
 ```
 
-### 7. Ongoing updates
+## Ongoing updates
 - 3rd way (ostream wrapper);
 - [maybe] 4th way (function that takes ostream, data structure and formatter).
 
-### 8. Requirements
+## Requirements
 - **Standards:** C++11, C++14, C++17, C++20, C++23, C++23+;
 - **Compilers:** G++/GCC (confirmed), MSVC & Clang/LLVM (potentially).
