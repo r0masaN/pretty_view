@@ -12,13 +12,9 @@
 #include <valarray>
 #include <tuple>
 #include <string>
-#include <string_view>
 #include <cstdint>
 
 #include "pretty_view\pretty_view.hpp"
-
-using namespace std::string_literals;
-using namespace std::string_view_literals;
 
 using namespace rmsn;
 
@@ -26,7 +22,7 @@ template<typename T>
 void test(const char *const name, const T& value) {
     std::cout << std::string(10, '-') << "\n";
     std::cout << "TEST " << name << "\n";
-    std::cout << "1st way:\n" << pretty_view{value} << "\n";
+    std::cout << "1st way:\n" << pretty_view<decltype(value)>{value} << "\n";
     std::cout << "2st way:\n" << value << "\n";
     std::cout << std::string(10, '-') << "\n";
 }
@@ -155,8 +151,8 @@ int main() {
     std::vector<student> students;
     students.reserve(4);
     students.emplace_back(22, "Roman", gender::MALE, std::vector<std::uint16_t>{4, 5, 3, 4});
-    students.emplace_back(22, "Vadim"s, gender::MALE, std::vector<std::uint16_t>{3, 5, 4});
-    students.emplace_back(21, "Anna"sv, gender::FEMALE, std::vector<std::uint16_t>{3, 4, 3, 2});
+    students.emplace_back(22, "Vadim", gender::MALE, std::vector<std::uint16_t>{3, 5, 4});
+    students.emplace_back(21, "Anna", gender::FEMALE, std::vector<std::uint16_t>{3, 4, 3, 2});
     students.emplace_back(18, "Vanrye", gender::MALE, std::vector<std::uint16_t>{5, 5, 5, 5, 5});
     test("vector<custom_type>", students);
 
