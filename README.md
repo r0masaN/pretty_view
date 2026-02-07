@@ -1,7 +1,7 @@
 # pretty_view
 A header-only C++ library for pretty-printing collections (`std::vector`, `std::map`, etc.) and tuple-like types (`std::tuple`, `std::pair`, etc.), uncluding nested ones, with customizable formatting, via `operator<<`.
 
-**Standards:** C++11-C++23+. **Compilers:** GCC/G++, MSVC, Clang/
+**Standards:** C++11-C++23+. **Compilers:** GCC/G++, MSVC, Clang.
 
 ## TL;DR
 ```c++
