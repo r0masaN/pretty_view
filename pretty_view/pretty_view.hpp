@@ -182,15 +182,18 @@ namespace rmsn { // main namespace
 
 namespace rmsn {
     namespace fmt { // global variables used in pretty_view.operator<<
+        // helper struct for formatting collections and tuples output
+        struct formatter {
+            std::string collection_prefix = "[", collection_postfix = "]", collection_delimiter = ", ",
+                tuple_prefix = "{", tuple_postfix = "}", tuple_delimiter = ", ";
+        };
+
 #if CPP_VERSION >= 202002L
-        inline constinit const char
+        inline constinit
 #elif CPP_VERSION >= 201703L
-        inline const char
-#elif CPP_VERSION >= 201103L
-        const char
+        inline
 #endif
-            *collection_prefix = "[", *collection_postfix = "]", *collection_delimiter = ", ",
-            *tuple_prefix = "{", *tuple_postfix = "}", *tuple_delimiter = ", ";
+            formatter format;
     }
 }
 
@@ -219,7 +222,6 @@ namespace rmsn {
     inline std::ostream& operator<<(std::ostream& os, const pretty_view<U>& pv);
 
     // simple proxy class for collections and tuples (to prevent ADL from breaking overloadings or messing with smth in std)
-    // TODO proxy contains things from `format` => `operator<<` overloading becomes thread-safe
 #if CPP_VERSION >= 202002L
     template<dtl::is_collection_or_tuple_and_not_string_like T>
 #elif CPP_VERSION >= 201103L
@@ -229,7 +231,7 @@ namespace rmsn {
     // можно использовать std::conditional_t<!IsTemporary, const T&, const T>
     class pretty_view {
     public:
-        explicit pretty_view(const T& t) noexcept;
+        explicit pretty_view(const T& t, const fmt::formatter& format = fmt::format) noexcept(true);
 
         pretty_view(const pretty_view<T>& other) = delete;
 
@@ -245,6 +247,7 @@ namespace rmsn {
 
     private:
         const dtl::base_t<T>& t_;
+        const fmt::formatter& format_;
     };
 
 #if CPP_VERSION >= 201703L

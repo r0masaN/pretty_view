@@ -12,7 +12,6 @@
 #include <valarray>
 #include <tuple>
 #include <string>
-#include <string_view>
 #include <cstdint>
 
 #include "pretty_view\pretty_view.hpp"
@@ -28,7 +27,7 @@ void test(const char *const name, const T& value) {
     std::cout << std::string(10, '-') << "\n";
 }
 
-/*namespace {
+namespace {
     enum class gender {
         MALE,
         FEMALE
@@ -70,7 +69,7 @@ void test(const char *const name, const T& value) {
             return os;
         }
     };
-};*/
+};
 
 int main() {
     int arr[] = {1, 2, 3, 4, 5};
@@ -90,7 +89,7 @@ int main() {
     test("unordered_map<string,int>", std::unordered_map<std::string, int>{{"x", 1}, {"y", 2}});
 
     test("vector<string>", std::vector<std::string>{"hello", "world"});
-    //test("span<char>", std::span<const char>("abc", 3));
+    test("span<char>", std::span<const char>("abc", 3));
 
     test("tuple<int,double,const char*>", std::make_tuple(1, 2.5, "hi"));
     test("pair<int,string>", std::pair<int, std::string>{10, "xx"});
@@ -145,17 +144,17 @@ int main() {
     test("empty tuple", std::tuple<>{});
     test("vector<tuple{}>", std::vector<std::tuple<>>{std::tuple<>{}, std::tuple<>{}});
 
-/*    int raw[4] = {1, 2, 3, 4};
+    int raw[4] = {1, 2, 3, 4};
     std::span s(raw);
-    test("std::span", s);*/
+    test("std::span", s);
 
-/*    std::vector<student> students;
+    std::vector<student> students;
     students.reserve(4);
     students.emplace_back(22, "Roman", gender::MALE, std::vector<std::uint16_t>{4, 5, 3, 4});
     students.emplace_back(22, "Vadim", gender::MALE, std::vector<std::uint16_t>{3, 5, 4});
     students.emplace_back(21, "Anna", gender::FEMALE, std::vector<std::uint16_t>{3, 4, 3, 2});
     students.emplace_back(18, "Vanrye", gender::MALE, std::vector<std::uint16_t>{5, 5, 5, 5, 5});
-    test("vector<custom_type>", students);*/
+    test("vector<custom_type>", students);
 
     return 0;
 }
