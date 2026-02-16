@@ -211,7 +211,8 @@ std::cout << my_structs;
 
 ## Ongoing updates
 - 3rd way (ostream wrapper);
-- [maybe] 4th way (function that takes ostream, data structure and formatter).
+- 4th way (function that takes ostream, data structure and formatter);
+- 5th way (`std::formatter` for `std::format`/`std::print`).
 
 ## Requirements
 - **Standards:** C++11, C++14, C++17, C++20, C++23, C++23+;
