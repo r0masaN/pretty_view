@@ -45,7 +45,6 @@ namespace {
     }
 
     class student {
-    private:
         std::uint8_t age_;
         std::string name_;
         gender gender_;
@@ -53,18 +52,19 @@ namespace {
 
     public:
         template<typename String, typename Vector>
-        requires requires (const String& string) { std::string{string}; } && std::is_same_v<Vector, std::vector<std::uint16_t>>
-        explicit student(const std::uint8_t age, String&& name, const gender gender, Vector&& marks) noexcept :
-                age_{age}, name_{std::forward<String>(name)}, gender_{gender}, marks_{std::forward<Vector>(marks)}
-        {}
+            requires requires (const std::remove_reference_t<String>& string) { std::string{string}; } && std::is_same_v<std::remove_reference_t<Vector>, std::vector<std::uint16_t>>
+        explicit student(const std::uint8_t age, String&& name, const gender gender, Vector&& marks) noexcept : age_{age},
+            name_{std::forward<String>(name)},
+            gender_{gender},
+            marks_{std::forward<Vector>(marks)} {}
 
         friend std::ostream& operator<<(std::ostream& os, const student& student) {
             os << "student[\n"
-               << "\tage=" << +student.age_ << ",\n"
-               << "\tname=" << student.name_ << ",\n"
-               << "\tgender=" << to_string(student.gender_) << ",\n"
-               << "\tmarks=" << student.marks_ << "\n"
-               << "]";
+                << "\tage=" << +student.age_ << ",\n"
+                << "\tname=" << student.name_ << ",\n"
+                << "\tgender=" << to_string(student.gender_) << ",\n"
+                << "\tmarks=" << student.marks_ << "\n"
+                << "]";
 
             return os;
         }
@@ -72,7 +72,7 @@ namespace {
 };
 
 int main() {
-    int arr[] = {1, 2, 3, 4, 5};
+    const int arr[] = {1, 2, 3, 4, 5};
     test("int arr[]", arr);
 
     test("vector<int>", std::vector<int>{1, 2, 3});
@@ -94,47 +94,47 @@ int main() {
     test("tuple<int,double,const char*>", std::make_tuple(1, 2.5, "hi"));
     test("pair<int,string>", std::pair<int, std::string>{10, "xx"});
 
-    auto nested_tup = std::tuple<int, std::tuple<int, int>, std::pair<int, int>>{
-            10,
-            std::make_tuple(20, 30),
-            std::pair<int, int>{40, 50}
+    const auto nested_tup = std::tuple<int, std::tuple<int, int>, std::pair<int, int>>{
+        10,
+        std::make_tuple(20, 30),
+        std::pair<int, int>{40, 50}
     };
     test("nested_tuple", nested_tup);
 
-    std::vector<std::tuple<int, double, std::string>> vt = {
-            {1, 2.5, "a"},
-            {3, 4.5, "b"}
+    const std::vector<std::tuple<int, double, std::string>> vt = {
+        {1, 2.5, "a"},
+        {3, 4.5, "b"}
     };
     test("vector of tuples", vt);
 
-    std::vector<std::vector<std::tuple<int, int>>> crazy = {
-            {{1, 2}, {3, 4}},
-            {{5, 6}, {7, 8}}
+    const std::vector<std::vector<std::tuple<int, int>>> crazy = {
+        {{1, 2}, {3, 4}},
+        {{5, 6}, {7, 8}}
     };
     test("vector<vector<tuple>>", crazy);
 
-    auto mega = std::make_tuple(
-            std::vector<int>{1, 2, 3},
-            std::set<std::string>{"x", "y"},
-            std::tuple<std::vector<int>, std::vector<std::vector<int>>>{
-                    {5, 6},
-                    {{7, 8}, {9, 10}}
-            }
+    const auto mega = std::make_tuple(
+        std::vector<int>{1, 2, 3},
+        std::set<std::string>{"x", "y"},
+        std::tuple<std::vector<int>, std::vector<std::vector<int>>>{
+            {5, 6},
+            {{7, 8}, {9, 10}}
+        }
     );
     test("super nested structure", mega);
 
-    std::map<int, std::tuple<int, std::vector<int>, std::string>> mega_map{
-            {1, {10, {1, 2, 3}, "aaa"}},
-            {2, {20, {4, 5},    "bbb"}}
+    const std::map<int, std::tuple<int, std::vector<int>, std::string>> mega_map{
+        {1, {10, {1, 2, 3}, "aaa"}},
+        {2, {20, {4, 5}, "bbb"}}
     };
     test("map<int, tuple<...>>", mega_map);
 
-    std::vector<std::tuple<
-            int,
-            std::vector<std::string>,
-            std::tuple<std::vector<int>, std::string>
+    const std::vector<std::tuple<
+        int,
+        std::vector<std::string>,
+        std::tuple<std::vector<int>, std::string>
     >> insane = {
-            {1, {"x", "y"}, {{1, 2, 3}, "lol"}}
+        {1, {"x", "y"}, {{1, 2, 3}, "lol"}}
     };
     test("insane nested tuple", insane);
 
@@ -144,8 +144,8 @@ int main() {
     test("empty tuple", std::tuple<>{});
     test("vector<tuple{}>", std::vector<std::tuple<>>{std::tuple<>{}, std::tuple<>{}});
 
-    int raw[4] = {1, 2, 3, 4};
-    std::span s(raw);
+    const int raw[4] = {1, 2, 3, 4};
+    const std::span s{raw};
     test("std::span", s);
 
     std::vector<student> students;

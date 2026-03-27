@@ -32,16 +32,15 @@ namespace rmsn {
 
     // collection and not tuple-like
     template<typename T>
-    static inline void process_collection_or_tuple(std::ostream& os, const T& t, const fmt::formatter& format, std::true_type , std::false_type);
+    static inline void process_collection_or_tuple(std::ostream& os, const T& t, const fmt::formatter& format, std::true_type, std::false_type);
 
     // collection and tuple-like (for example, std::array<T, std::size_t>)
     template<typename T>
-    static inline void process_collection_or_tuple(std::ostream& os, const T& t, const fmt::formatter& format, std::true_type , std::true_type);
+    static inline void process_collection_or_tuple(std::ostream& os, const T& t, const fmt::formatter& format, std::true_type, std::true_type);
 
     // helper function for printing tuple
     template<typename T, std::size_t... I>
     static inline void print_tuple(std::ostream& os, const T& t, const fmt::formatter& format, const index_sequence<I...>&, [[maybe_unused]] bool is_collection);
-
 
     // just print
     template<typename T>
@@ -68,7 +67,8 @@ namespace rmsn {
         using elem_t = dtl::base_t<decltype(*begin)>;
 
         for (auto it = begin; it != end; ++it) { // iterating on collection
-            if (it != begin) os << format.collection_delimiter;
+            if (it != begin)
+                os << format.collection_delimiter;
             // recursive call to one of the overloadings
             process_collection_or_tuple(os, *it, format,
 #if CPP_VERSION >= 201402L
@@ -80,7 +80,7 @@ namespace rmsn {
 #endif
         }
 
-        os << format.collection_postfix;
+        os<< format.collection_postfix;
     }
 
     // process as tuple, not like collection
@@ -137,14 +137,6 @@ namespace rmsn {
     }
 #endif
 
-/**
- * The 1st way: <br>
- * - no "using namespace rmsn" needed; <br>
- * - pretty_view wrapper for collection/tuple needed; <br>
- * - operator<< overloading will be found due to ADL; <br>
- * - operator<< overloading will be selected due to concrete param type (pretty_view<T>).
-*/
-
 #if CPP_VERSION >= 202002L
     template<dtl::is_collection_or_tuple_and_not_string_like T>
     pretty_view<T>::
@@ -163,8 +155,10 @@ namespace rmsn {
             // because tuples unpack at a compile-time
             constexpr bool is_collection = dtl::is_collection<U>;
 
-            if constexpr (is_collection) os << pv.format_.collection_prefix;
-            else os << pv.format_.tuple_prefix;
+            if constexpr (is_collection)
+                os << pv.format_.collection_prefix;
+            else
+                os << pv.format_.tuple_prefix;
 
 #if CPP_VERSION >= 202002L
             // fun :) it's anonymous lambda that's unwrapping index sequence made from tuple
@@ -172,10 +166,12 @@ namespace rmsn {
                 ( // 169-174 lines will be applied for each unwrapped element from tuple
                     ( // if that's the first element of tuple, don't write delimiter (before him)
                         I == 0 ? void() : void(os << (is_collection ? pv.format_.collection_delimiter : pv.format_.tuple_delimiter)),
-                        [&os, &pv]() { // another anonymous lambda that does the same logic that 52-57 lines
+                        [&os, &pv] { // another anonymous lambda that does the same logic that 52-57 lines
                             const auto& elem = std::get<I>(pv.t_); // std::get<I>(pv.t_) gets an I-st element from tuple pv.baseT
-                            if constexpr (dtl::is_collection_or_tuple_and_not_string_like<dtl::base_t<decltype(elem)>>) os << pretty_view{elem, pv.format_};
-                            else os << elem;
+                            if constexpr (dtl::is_collection_or_tuple_and_not_string_like<dtl::base_t<decltype(elem)>>) [[unlikely]]
+                                os << pretty_view{elem, pv.format_};
+                            else [[likely]]
+                                os << elem;
                         }() // immediately invoke this lambda
                     ),
                     ... // unwrapping variadic pack
@@ -186,8 +182,10 @@ namespace rmsn {
             print_tuple(os, pv.t_, std::make_index_sequence<std::tuple_size<dtl::base_t<U>>::value>{}, pv.format_);
 #endif
 
-            if constexpr (is_collection) os << pv.format_.collection_postfix;
-            else os << pv.format_.tuple_postfix;
+            if constexpr (is_collection)
+                os << pv.format_.collection_postfix;
+            else
+                os << pv.format_.tuple_postfix;
 
         } else if constexpr (dtl::is_collection<U>) { // if proxy contains collection
             os << pv.format_.collection_prefix;
@@ -196,10 +194,13 @@ namespace rmsn {
             using elem_t = dtl::base_t<decltype(*begin)>;
 
             for (auto it = begin; it != end; ++it) { // iterating on collection
-                if (it != begin) os << pv.format_.collection_delimiter;
+                if (it != begin)
+                    os << pv.format_.collection_delimiter;
                 // if collection's element is collection or tuple himself
-                if constexpr (dtl::is_collection_or_tuple_and_not_string_like<elem_t>) os << pretty_view{*it, pv.format_}; // wrap in proxy => recursion
-                else os << *it; // else it's primitive or class/struct that isn't baseT collection/tuple
+                if constexpr (dtl::is_collection_or_tuple_and_not_string_like<elem_t>) [[unlikely]]
+                    os << pretty_view{*it, pv.format_}; // wrap in proxy => recursion
+                else [[likely]]
+                    os << *it; // else it's primitive or class/struct that isn't baseT collection/tuple
             }
 
             os << pv.format_.collection_postfix;
@@ -219,14 +220,6 @@ namespace rmsn {
         return os;
     }
 
-/**
- * The 2nd way: <br>
- * - "using namespace rmsn" needed; <br>
- * - no wrappers needed; <br>
- * - operator<< overloading will be found due to ADL; <br>
- * - operator<< overloading will be selected due to concept (is_collection_or_tuple_and_not_string_like<T>).
-*/
-
     // realization of the `operator<<`
 #if CPP_VERSION >= 202002L
     template<dtl::is_collection_or_tuple_and_not_string_like T>
@@ -240,8 +233,10 @@ namespace rmsn {
             // because tuples unpack at a compile-time
             constexpr bool is_collection = dtl::is_collection<T>;
 
-            if constexpr (is_collection) os << fmt::format.collection_prefix;
-            else os << fmt::format.tuple_prefix;
+            if constexpr (is_collection)
+                os << fmt::format.collection_prefix;
+            else
+                os << fmt::format.tuple_prefix;
 
 #if CPP_VERSION >= 202002L
             // fun :) it's anonymous lambda that's unwrapping index sequence made from tuple
@@ -258,15 +253,18 @@ namespace rmsn {
             print_tuple(os, t, std::make_index_sequence<std::tuple_size<dtl::base_t<T>>::value>{}, fmt::format);
 #endif
 
-            if constexpr (is_collection) os << fmt::format.collection_postfix;
-            else os << fmt::format.tuple_postfix;
+            if constexpr (is_collection)
+                os << fmt::format.collection_postfix;
+            else
+                os << fmt::format.tuple_postfix;
 
         } else if constexpr (dtl::is_collection<T>) { // if type is collection
             os << fmt::format.collection_prefix;
 
             const auto begin = std::begin(t), end = std::end(t);
             for (auto it = begin; it != end; ++it) { // iterating on collection
-                if (it != begin) os << fmt::format.collection_delimiter;
+                if (it != begin)
+                    os << fmt::format.collection_delimiter;
                 os << *it;
             }
 

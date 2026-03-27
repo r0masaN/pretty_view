@@ -1,14 +1,12 @@
 #ifndef PRETTY_VIEW_HPP
 #define PRETTY_VIEW_HPP
 
-
 // the version of C++ standard that is currently in use
 #ifdef _MSVC_LANG
 #define CPP_VERSION _MSVC_LANG
 #else
 #define CPP_VERSION __cplusplus
 #endif
-
 
 #if CPP_VERSION >= 202002L
 #include <concepts>
@@ -21,7 +19,6 @@
 #endif
 #include <tuple>
 #include <ostream>
-
 
 namespace rmsn { // main namespace
     namespace dtl { // hidden inner namespace for helping tools
@@ -84,9 +81,9 @@ namespace rmsn { // main namespace
         template<typename T>
         struct char_array_or_pointer_s : bool_constant<(std::is_array<T>::value || std::is_pointer<T>::value) &&
 #if CPP_VERSION >= 201402L
-            is_char_like<typename std::remove_pointer<typename std::decay<T>::type>::type>> {};
+        is_char_like<typename std::remove_pointer<typename std::decay<T>::type>::type>> {};
 #else
-            is_char_like_s<typename std::remove_pointer<typename std::decay<T>::type>::type>::value> {};
+        is_char_like_s<typename std::remove_pointer<typename std::decay<T>::type>::type>::value> {};
 #endif
 
         template<typename T, typename = void>
@@ -95,15 +92,15 @@ namespace rmsn { // main namespace
         template<typename T>
         struct char_string_or_string_view_s<T, void_t<typename T::value_type>> : bool_constant<
 #if CPP_VERSION >= 201402L
-                is_char_like<typename T::value_type> // or is it (any char)-based std::basic_string or std::basic_string_view
+            is_char_like<typename T::value_type> // or is it (any char)-based std::basic_string or std::basic_string_view
 #else
-                is_char_like_s<typename T::value_type>::value // or is it (any char)-based std::basic_string or std::basic_string_view
+            is_char_like_s<typename T::value_type>::value // or is it (any char)-based std::basic_string or std::basic_string_view
 #endif
-                && (std::is_same<T, std::basic_string<typename T::value_type>>::value
+            && (std::is_same<T, std::basic_string<typename T::value_type>>::value
 #if CPP_VERSION >= 201703L
-                || std::is_same<T, std::basic_string_view<typename T::value_type>>::value
+            || std::is_same<T, std::basic_string_view<typename T::value_type>>::value
 #endif
-            )> {};
+        )> {};
 
         // is the type is a string-like (need to ensure that we won't write a string-like type char by char like it's array of chars)
         // also used to prevent ambiguous call to standard `operator<<` overloadings in `std` for `const CharT *`-like types
@@ -120,7 +117,7 @@ namespace rmsn { // main namespace
 #if CPP_VERSION >= 202002L
         // is the type is a collection-like (has iterators)
         template<typename T, typename BaseT = base_t<T>>
-        concept is_collection = requires (const BaseT& baseT) {
+        concept is_collection = requires(const BaseT& baseT) {
             std::begin(baseT); // unified way to get an iterator (instead of simple baseT.begin() that, for example, couldn'baseT be
             std::end(baseT); // invoked on raw arrays
         }; // cuz std::string, std::string_view, char *, const char * also can get iterators
@@ -133,8 +130,8 @@ namespace rmsn { // main namespace
         // cuz std::string, std::string_view, char *, const char * also can get iterators
         template<typename T>
         struct is_collection_s<T, void_t<decltype(std::begin(std::declval<T&>())), decltype(std::end(std::declval<T&>()))>> : std::true_type {};
-
 #if CPP_VERSION >= 201402L
+
         // is the type is a collection-like (has iterators)
         template<typename T, typename BaseT = base_t<T>>
         static constexpr bool is_collection = is_collection_s<BaseT>::value;
@@ -154,8 +151,8 @@ namespace rmsn { // main namespace
 
         template<typename T>
         struct is_tuple_like_s<T, void_t<decltype(std::tuple_size<T>::value)>> : std::true_type {};
-
 #if CPP_VERSION >= 201402L
+
         // is the type is a tuple-like (can invoke std::get<N>(), std::tuple_size<T>)
         template<typename T, typename BaseT = base_t<T>>
         static constexpr bool is_tuple_like = is_tuple_like_s<BaseT>::value;
@@ -179,7 +176,6 @@ namespace rmsn { // main namespace
     }
 }
 
-
 namespace rmsn {
     namespace fmt { // global variables used in pretty_view.operator<<
         // helper struct for formatting collections and tuples output
@@ -193,20 +189,11 @@ namespace rmsn {
 #elif CPP_VERSION >= 201703L
         inline
 #endif
-            formatter format;
+        formatter format{};
     }
 }
 
-
 namespace rmsn {
-/**
- * The 1st way: <br>
- * - no "using namespace rmsn" needed; <br>
- * - pretty_view wrapper for collection/tuple needed; <br>
- * - operator<< overloading will be found due to ADL; <br>
- * - operator<< overloading will be selected due to concrete param type (pretty_view<T>).
-*/
-
     // declaration of the struct (to be visible in the following operator<<)
 #if CPP_VERSION >= 202002L
     template<dtl::is_collection_or_tuple_and_not_string_like T>
@@ -249,19 +236,11 @@ namespace rmsn {
         const dtl::base_t<T>& t_;
         const fmt::formatter& format_;
     };
-
 #if CPP_VERSION >= 201703L
-    template<typename T>
-    pretty_view(T) -> pretty_view<T>;
-#endif
 
-/**
- * The 2nd way: <br>
- * - "using namespace rmsn" needed; <br>
- * - no wrappers needed; <br>
- * - operator<< overloading will be found due to ADL; <br>
- * - operator<< overloading will be selected due to concept (is_collection_or_tuple_and_not_string_like<T>).
-*/
+    template<typename T>
+    pretty_view(const T&, const fmt::formatter&) -> pretty_view<T>;
+#endif
 
     // declaration of the `operator<<`
 #if CPP_VERSION >= 202002L
