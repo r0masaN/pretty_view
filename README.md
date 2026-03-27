@@ -5,7 +5,7 @@ A header-only C++ library for pretty-printing collections (`std::vector`, `std::
 
 ## TL;DR
 ```c++
-#include "pretty_view/pretty_view.hpp"
+#include "include/pretty_view.hpp"
 
 using namespace rmsn;
 
@@ -30,7 +30,7 @@ About differences – down through paragraphs.
 ### 1. Including and files
 Include pretty_view's header:
 ```c++
-#include "pretty_view/pretty_view.hpp"
+#include "include/pretty_view.hpp"
 ```
 Or import module:
 ```c++
@@ -121,7 +121,7 @@ For you, it's better to use `pretty_view` wrapper with lvalue objects (objects t
 #### 4.2. 2nd way
 Luckily, this way fixes that annoying linkage to wrapper structure `pretty_view`. I just figured out that ADL not that really necessary in this situation, you can just write:
 ```c++
-#include "pretty_view/pretty_view.hpp"
+#include "include/pretty_view.hpp"
 
 using namespace rmsn;
 ```
