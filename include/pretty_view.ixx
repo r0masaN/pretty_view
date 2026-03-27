@@ -51,7 +51,7 @@ export namespace rmsn::fmt { // global variables used in pretty_view.operator<<
             tuple_prefix = "{", tuple_postfix = "}", tuple_delimiter = ", ";
     };
 
-    inline constinit formatter format;
+    inline constinit formatter format{};
 }
 
 export namespace rmsn {
